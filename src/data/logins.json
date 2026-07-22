@@ -1,0 +1,23 @@
+{
+  "_comment": "PLACEHOLDER credentials -- replace before the event. Passwords: team1=team1pass, team2=team2pass, admin=adminpass. To change: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. language must be one of: python | cpp | java.",
+  "students": [
+    {
+      "username": "team1",
+      "password_hash": "pbkdf2$100000$dlyTA9dYfhcH+ctZKY6rJQ==$SR0YzUgRmAZ3CdDvBmU+sEQ1NGtyLTk2ydC8wn7KK1w=",
+      "school": "School A",
+      "language": "python"
+    },
+    {
+      "username": "team2",
+      "password_hash": "pbkdf2$100000$j8ggjLWPFy4rMXpgxTf4MQ==$PXhrbhh1NnDsjk9KSpeOmDuE1rYCGIWYwv/KN2974lw=",
+      "school": "School B",
+      "language": "python"
+    }
+  ],
+  "admins": [
+    {
+      "username": "admin",
+      "password_hash": "pbkdf2$100000$ifRFfzK1OYyFgtW7Elbj1w==$tpib7Ut1HfwtSnp9wDbJyDtv7KQWDAPD9TCAU+zCb3w="
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+/* Techy Programming UI */
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    font-family: 'Courier New', Courier, monospace;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+.glass {
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 500px;
+}
+
+.header {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #27c9d7;
+    margin-bottom: 1rem;
+}
+
+.timer {
+    font-size: 1.5rem;
+    color: #ff0000;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+input, button, select {
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #27c9d7;
+    margin-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+button {
+    background: linear-gradient(90deg, #27c9d7, #000000);
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.5s ease-in-out; /* Smooth gradient transition */
+}
+
+button:hover {
+    background: linear-gradient(60deg, #000000, #27c9d7);
+    transition: background 0.5s ease-in-out; /* Smooth gradient transition */
+}
+
+.status {
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.admin-stats {
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 16px 0 rgba(0, 255, 255, 0.5);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 2rem auto;
+    max-width: 700px;
+}
+
+.start-button {
+    background: #27c9d7 !important;
+    color: #ffffff !important;
+    font-size: 1.2rem;
+    padding: 1rem !important;
+    margin-top: 20px;
+}
+
+.question-status {
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.question-status:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+}
+
+@media (max-width: 600px) {
+    .glass, .admin-stats {
+        max-width: 95vw;
+        padding: 1rem;
+    }
+    .header {
+        font-size: 1.5rem;
+    }
+}
+
+/* Top-corner logos */
+.top-left-logo, .top-right-logo {
+    position: fixed;
+    top: 12px; /* space from top edge */
+    width: 200px; /* increased 200% */
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    background: rgba(255,255,255,0.02);
+    z-index: 1000;
+}
+.top-left-logo {
+    left: 12px; /* space from left edge */
+}
+.top-right-logo {
+    right: 12px; /* space from right edge */
+}
+.club-logo{
+    position: fixed;
+    top: 130px; /* space from top edge */
+    width: 200px; /* increased 200% */
+    right: 12px;
+    height: auto;
+    border-radius: 8px;
+    z-index: 1000;
+}
+
+@media (max-width: 600px) {
+    .top-left-logo, .top-right-logo { width: 104px; top: 8px; } /* increased 200% */
+}

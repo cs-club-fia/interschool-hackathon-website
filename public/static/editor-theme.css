@@ -1,0 +1,60 @@
+/* CodeMirror theme matching the site's dark glassmorphism look (style.css) */
+
+#editorContainer {
+    margin-bottom: 1rem;
+}
+
+.cm-s-hackathon-dark.CodeMirror {
+    background: rgba(0, 0, 0, 0.5);
+    color: #e6e6e6;
+    border: 1px solid #27c9d7;
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    height: 400px;
+    text-align: left;
+}
+
+.cm-s-hackathon-dark .CodeMirror-gutters {
+    background: rgba(0, 0, 0, 0.6);
+    border-right: 1px solid rgba(39, 201, 215, 0.3);
+}
+
+.cm-s-hackathon-dark .CodeMirror-linenumber {
+    color: rgba(39, 201, 215, 0.6);
+}
+
+.cm-s-hackathon-dark .CodeMirror-cursor {
+    border-left: 2px solid #27c9d7;
+}
+
+.cm-s-hackathon-dark div.CodeMirror-selected {
+    background: rgba(39, 201, 215, 0.25);
+}
+
+.cm-s-hackathon-dark .CodeMirror-matchingbracket {
+    color: #ffffff !important;
+    background: rgba(39, 201, 215, 0.4);
+    border-radius: 3px;
+}
+
+.cm-s-hackathon-dark .cm-keyword { color: #27c9d7; font-weight: bold; }
+.cm-s-hackathon-dark .cm-atom { color: #ff9d00; }
+.cm-s-hackathon-dark .cm-number { color: #ff9d00; }
+.cm-s-hackathon-dark .cm-def { color: #7fffd4; }
+.cm-s-hackathon-dark .cm-variable { color: #e6e6e6; }
+.cm-s-hackathon-dark .cm-variable-2 { color: #9fd8ff; }
+.cm-s-hackathon-dark .cm-variable-3,
+.cm-s-hackathon-dark .cm-type { color: #7fffd4; }
+.cm-s-hackathon-dark .cm-property { color: #9fd8ff; }
+.cm-s-hackathon-dark .cm-operator { color: #e6e6e6; }
+.cm-s-hackathon-dark .cm-comment { color: #6a9955; font-style: italic; }
+.cm-s-hackathon-dark .cm-string,
+.cm-s-hackathon-dark .cm-string-2 { color: #7ee787; }
+.cm-s-hackathon-dark .cm-meta { color: #27c9d7; }
+.cm-s-hackathon-dark .cm-qualifier { color: #27c9d7; }
+.cm-s-hackathon-dark .cm-builtin { color: #7fffd4; }
+.cm-s-hackathon-dark .cm-bracket { color: #e6e6e6; }
+.cm-s-hackathon-dark .cm-tag { color: #27c9d7; }
+.cm-s-hackathon-dark .cm-attribute { color: #9fd8ff; }
+.cm-s-hackathon-dark .cm-error { color: #ff5555; }

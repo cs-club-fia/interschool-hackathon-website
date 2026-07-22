@@ -1,0 +1,22 @@
+name = "hackathon"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+# Static frontend (CodeMirror, CSS, timer/editor JS, logos) is served straight
+# from ./public. Any request that does NOT match a file there falls through to
+# the Worker in src/index.ts, which renders the dynamic pages server-side.
+[assets]
+directory = "./public"
+
+# D1 (serverless SQLite) holds all runtime state: submissions (incl. the
+# student's code), autosaved drafts, and anti-cheat metrics. Durable across
+# redeploys. Fill in database_id after: wrangler d1 create hackathon
+[[d1_databases]]
+binding = "DB"
+database_name = "hackathon"
+database_id = "PLACEHOLDER_RUN_wrangler_d1_create_hackathon"
+migrations_dir = "migrations"
+
+# SECRET_KEY (HMAC signing for session cookies) is NOT stored here.
+# Set it as a secret:  wrangler secret put SECRET_KEY
+# For local `wrangler dev`, put it in .dev.vars (gitignored).
