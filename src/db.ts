@@ -37,9 +37,30 @@ export async function canAccess(env: Env, username: string, qname: string): Prom
   )
     .bind(username, qname)
     .first<{ submitted: number; start_time: number | null }>();
-  const left = row && row.start_time ? total - (nowSec() - Number(row.start_time)) : total;
+  const left = row && row.start_time ? Math.floor(total - (nowSec() - Number(row.start_time))) : total;
   const submitted = !!(row && row.submitted);
   return left > 0 && !submitted;
+}
+
+// Combined state for the POST /question integrity checks: is this question
+// already submitted, and how much (floored) time remains.
+export async function getSubmitState(
+  env: Env,
+  username: string,
+  qname: string,
+): Promise<{ submitted: boolean; timeLeft: number }> {
+  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const row = await env.DB.prepare(
+    "SELECT submitted, start_time FROM submissions WHERE username = ? AND question = ?",
+  )
+    .bind(username, qname)
+    .first<{ submitted: number; start_time: number | null }>();
+  const submitted = !!(row && row.submitted);
+  const timeLeft =
+    row && row.start_time
+      ? Math.max(0, Math.floor(total - (nowSec() - Number(row.start_time))))
+      : total;
+  return { submitted, timeLeft };
 }
 
 // --- Submissions ---

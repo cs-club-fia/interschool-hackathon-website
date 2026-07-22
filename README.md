@@ -26,8 +26,13 @@ echo "SECRET_KEY=some-long-random-string" > .dev.vars   # gitignored
 npm run d1:init:local        # apply migrations to the LOCAL D1
 npm run dev                  # http://127.0.0.1:8787
 ```
-Placeholder logins (change before the event — see below):
-`team1 / team1pass`, `team2 / team2pass`, `admin / adminpass`.
+Placeholder **dev-only** logins: `team1 / team1pass`, `team2 / team2pass`,
+`admin / adminpass`.
+
+> ⚠️ **These are public (the repo is public) and MUST be rotated before any real
+> or public deployment** — otherwise anyone could log in as admin and download
+> every team's code. See "Teams / admin" below. Also set a strong `SECRET_KEY`
+> (the app refuses to start without one ≥ 32 chars).
 
 Inspect local data:
 ```bash

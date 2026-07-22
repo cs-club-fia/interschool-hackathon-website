@@ -1,15 +1,15 @@
 {
-  "_comment": "PLACEHOLDER credentials -- replace before the event. Passwords: team1=team1pass, team2=team2pass, admin=adminpass. To change: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. language must be one of: python | cpp | java.",
+  "_comment": "PLACEHOLDER credentials -- MUST be rotated before any real/public deployment (these hashes are in a public repo). To set a team/admin password: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. language must be one of: python | cpp | java. See README for the dev-only default passwords.",
   "students": [
     {
       "username": "team1",
-      "password_hash": "pbkdf2$100000$dlyTA9dYfhcH+ctZKY6rJQ==$SR0YzUgRmAZ3CdDvBmU+sEQ1NGtyLTk2ydC8wn7KK1w=",
+      "password_hash": "pbkdf2$600000$ccXj1EK9wOaaHvi/Cm/tzg==$KhNqK2c5gns3p+uXoaaT+OC2BYqRhcoAAGy6WT4MnL4=",
       "school": "School A",
       "language": "python"
     },
     {
       "username": "team2",
-      "password_hash": "pbkdf2$100000$j8ggjLWPFy4rMXpgxTf4MQ==$PXhrbhh1NnDsjk9KSpeOmDuE1rYCGIWYwv/KN2974lw=",
+      "password_hash": "pbkdf2$600000$H0p92Nk2GxhPFuVA7zjNbw==$ePSLhsfuGmHFMSIL9/BgKGaySPM29enknKTSTKphJnQ=",
       "school": "School B",
       "language": "python"
     }
@@ -17,7 +17,7 @@
   "admins": [
     {
       "username": "admin",
-      "password_hash": "pbkdf2$100000$ifRFfzK1OYyFgtW7Elbj1w==$tpib7Ut1HfwtSnp9wDbJyDtv7KQWDAPD9TCAU+zCb3w="
+      "password_hash": "pbkdf2$600000$qzdXgeF3Ms5g+CFSimuitA==$Q2FjHw+CDl6mdctqaWMje20CZvVDQnlM0am6+HRqLo0="
     }
   ]
 }

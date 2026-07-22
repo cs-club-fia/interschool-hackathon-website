@@ -59,6 +59,14 @@ function studentInfoMap(): Record<string, { school?: string; language?: string }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    // Fail closed if the session-signing secret is missing/weak, so a
+    // misconfigured deploy can't fall back to an empty, forgeable HMAC key.
+    if (!env.SECRET_KEY || env.SECRET_KEY.length < 32) {
+      console.error(
+        "SECRET_KEY is unset or too short (need >= 32 chars). Run: wrangler secret put SECRET_KEY",
+      );
+      return new Response("Server misconfiguration: SECRET_KEY not set.", { status: 500 });
+    }
     try {
       return await route(request, env);
     } catch (err) {
@@ -174,6 +182,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     const autoSubmit = form.get("auto_submit") === "1";
     const student = findStudent(s.u);
 
+    // Server-authoritative integrity: never overwrite an already-submitted
+    // question, and reject a manual submit once the timer has expired.
+    // auto_submit is exempt from the timer check so it can still capture work
+    // at the exact moment of expiry.
+    const state = await db.getSubmitState(env, s.u, qname);
+    if (state.submitted) return redirect("/review");
+    if (!autoSubmit && state.timeLeft <= 0) return redirect("/review");
+
     if (autoSubmit) {
       let code = String(form.get("code") || "");
       if (!code) code = (await db.getDraft(env, s.u, qname)) || "# auto-submitted empty file\n";
@@ -183,8 +199,9 @@ async function route(request: Request, env: Env): Promise<Response> {
       return redirect(next ? `/question?qname=${encodeURIComponent(next)}` : "/review");
     }
 
-    const code = clampCode(String(form.get("code") || ""));
-    if (!code.trim()) {
+    const code = String(form.get("code") || "");
+    const big = tooLarge(code);
+    if (big || !code.trim()) {
       return html(
         renderQuestion({
           qname,
@@ -192,10 +209,11 @@ async function route(request: Request, env: Env): Promise<Response> {
           questionText: QUESTIONS[qname].text,
           expectedExt: extensionForLanguage(student?.language),
           language: student?.language || "python",
-          draftCode: code,
+          draftCode: clampCode(code),
           csrfToken: await csrfTokenFor(env, s),
-          error: "No code submitted",
+          error: big ? "Submission too large (max ~1 MB)." : "No code submitted",
         }),
+        big ? 413 : 200,
       );
     }
     await db.submitAnswer(env, s.u, qname, code);
@@ -359,8 +377,14 @@ function requireStudentApi(session: Session | null): Response | null {
   return null;
 }
 
+// True if the code exceeds the size cap (measured in UTF-8 bytes).
+function tooLarge(code: string): boolean {
+  return new TextEncoder().encode(code).length > MAX_CODE_BYTES;
+}
+
+// Best-effort clamp for the draft/auto-submit paths (a manual submit is
+// rejected outright via tooLarge() rather than silently truncated).
 function clampCode(code: string): string {
-  // Guard against oversized submissions (parity with the old 2 MB cap).
   if (code.length > MAX_CODE_BYTES) return code.slice(0, MAX_CODE_BYTES);
   return code;
 }

@@ -8,7 +8,7 @@
 // produced here verify correctly in the Cloudflare Worker.
 import { webcrypto as crypto } from 'node:crypto';
 
-const ITERATIONS = 100000;
+const ITERATIONS = 600000;
 const KEY_LEN = 32; // bytes
 
 function b64(bytes) {

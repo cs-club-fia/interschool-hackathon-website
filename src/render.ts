@@ -3,6 +3,8 @@
 // leave/draft/paste-flag endpoints are identical to the originals, so the
 // vendored editor.js / timer.js / base leave-script work unchanged.
 
+import { EVENT_TIMEZONE } from "./data/questions";
+
 const AMP = /&/g,
   LT = /</g,
   GT = />/g,
@@ -490,9 +492,17 @@ document.querySelectorAll('#subTable thead th').forEach(function(th, idx){
 }
 
 function formatTime(unixSec: number): string {
-  const d = new Date(unixSec * 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(
-    d.getMinutes(),
-  )}:${pad(d.getSeconds())}`;
+  // Workers run in UTC; render in the event's timezone (see EVENT_TIMEZONE).
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: EVENT_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(unixSec * 1000));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")}:${get("second")}`;
 }

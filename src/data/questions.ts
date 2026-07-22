@@ -27,6 +27,10 @@ export const LANGUAGE_EXTENSIONS: Record<string, string> = {
 };
 export const DEFAULT_LANGUAGE = "python";
 
+// Timezone for displaying submission timestamps on the review page. The Worker
+// runtime is UTC, so set this to the event's IANA timezone.
+export const EVENT_TIMEZONE = "Asia/Kolkata";
+
 export function extensionForLanguage(language: string | undefined | null): string {
   return LANGUAGE_EXTENSIONS[language || DEFAULT_LANGUAGE] || LANGUAGE_EXTENSIONS[DEFAULT_LANGUAGE];
 }
