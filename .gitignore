@@ -4,3 +4,6 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# Plaintext login input for build-logins.mjs -- NEVER commit real passwords
+logins.input.json

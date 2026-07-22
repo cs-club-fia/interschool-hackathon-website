@@ -54,13 +54,21 @@ recovery on the free plan.
 ## Event configuration
 - **Questions & timers:** edit `src/data/questions.ts` (`QUESTIONS` text +
   `seconds`), then redeploy. Order in that file is the question order.
-- **Teams / admin:** edit `src/data/logins.json`, then redeploy. Each team has
-  `username`, `password_hash`, `school`, and `language` (`python` | `cpp` |
-  `java` — sets the download file extension). Generate a hash with:
+- **Teams / admin (many entrants — recommended):** put every team + admin with
+  their **plaintext** password in a `logins.input.json` file (copy the shape
+  from `logins.input.example.json`), then run:
   ```bash
-  npm run hash "theTeamPassword"
+  npm run build-logins        # logins.input.json -> src/data/logins.json
   ```
-  and paste the output into `password_hash`.
+  This PBKDF2-hashes every password and **re-verifies each hash with the same
+  algorithm the Worker uses before writing the file**, so a hash that wouldn't
+  log in can never be produced (no lock-outs). Then `npx wrangler deploy` (or
+  push). `logins.input.json` holds plaintext and is **gitignored — never commit
+  it**; distribute the passwords to teams out-of-band. `language` must be
+  `python` | `cpp` | `java` (sets the download file extension).
+- **Teams / admin (one-off):** edit `src/data/logins.json` directly and generate
+  a single hash with `npm run hash "theTeamPassword"`, pasting it into
+  `password_hash`.
 
 ## Downloading submissions (admins)
 On the admin dashboard: click a ✔ to download that team's file for that

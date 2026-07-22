@@ -10,6 +10,7 @@
     "d1:init:local": "wrangler d1 migrations apply hackathon --local",
     "d1:init:remote": "wrangler d1 migrations apply hackathon --remote",
     "hash": "node scripts/gen-hash.mjs",
+    "build-logins": "node scripts/build-logins.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

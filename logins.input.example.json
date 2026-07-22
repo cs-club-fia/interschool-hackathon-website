@@ -1,0 +1,11 @@
+{
+  "_comment": "TEMPLATE. Copy this to logins.input.json (which is gitignored), replace with real usernames/passwords/schools, then run: npm run build-logins. language must be python | cpp | java. Do NOT commit logins.input.json.",
+  "students": [
+    { "username": "team-a", "password": "CHANGE-ME-team-a", "school": "Example School A", "language": "python" },
+    { "username": "team-b", "password": "CHANGE-ME-team-b", "school": "Example School B", "language": "cpp" },
+    { "username": "team-c", "password": "CHANGE-ME-team-c", "school": "Example School C", "language": "java" }
+  ],
+  "admins": [
+    { "username": "admin", "password": "CHANGE-ME-a-strong-admin-password" }
+  ]
+}
