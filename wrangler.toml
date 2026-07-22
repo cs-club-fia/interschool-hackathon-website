@@ -14,7 +14,7 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "hackathon"
-database_id = "PLACEHOLDER_RUN_wrangler_d1_create_hackathon"
+database_id = "9327b27e-d99e-49dd-bb8e-03773a373f72"
 migrations_dir = "migrations"
 
 # SECRET_KEY (HMAC signing for session cookies) is NOT stored here.
