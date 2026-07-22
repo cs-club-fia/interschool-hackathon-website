@@ -3,13 +3,13 @@
   "students": [
     {
       "username": "team1",
-      "password_hash": "pbkdf2$600000$ccXj1EK9wOaaHvi/Cm/tzg==$KhNqK2c5gns3p+uXoaaT+OC2BYqRhcoAAGy6WT4MnL4=",
+      "password_hash": "pbkdf2$100000$SI3XQLe3kgvNA7N//JD2Uw==$3Fj+LhYxEMeJZwsNXgrqG4oBH28JK0FJ8FaTO71im08=",
       "school": "School A",
       "language": "python"
     },
     {
       "username": "team2",
-      "password_hash": "pbkdf2$600000$H0p92Nk2GxhPFuVA7zjNbw==$ePSLhsfuGmHFMSIL9/BgKGaySPM29enknKTSTKphJnQ=",
+      "password_hash": "pbkdf2$100000$IvYPUUWQy4X4NljpWU2qcw==$St5otPndeR7CRsFha0XBGP8uc4tbapadXjd/AR+5krI=",
       "school": "School B",
       "language": "python"
     }
@@ -17,7 +17,7 @@
   "admins": [
     {
       "username": "admin",
-      "password_hash": "pbkdf2$600000$qzdXgeF3Ms5g+CFSimuitA==$Q2FjHw+CDl6mdctqaWMje20CZvVDQnlM0am6+HRqLo0="
+      "password_hash": "pbkdf2$100000$X5FAXGEbqaUTBAtCeg5u4g==$H1wLBnQ5tJQw54e9Xjxb8TbRt0Ic5cLb/E6S9HzLXn0="
     }
   ]
 }

@@ -8,7 +8,9 @@
 // produced here verify correctly in the Cloudflare Worker.
 import { webcrypto as crypto } from 'node:crypto';
 
-const ITERATIONS = 600000;
+// Cloudflare Workers caps PBKDF2 at 100000 iterations (values above throw
+// NotSupportedError at runtime), so this is the maximum usable here.
+const ITERATIONS = 100000;
 const KEY_LEN = 32; // bytes
 
 function b64(bytes) {
