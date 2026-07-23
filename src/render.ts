@@ -61,14 +61,157 @@ const LEAVE_TRACKING_SCRIPT = `<script>
 })();
 </script>`;
 
+// Interactive constellation background rendered on every page (styled via #bg-fx
+// in style.css). Like LEAVE_TRACKING_SCRIPT above, this string is embedded inside
+// a template literal, so it MUST contain no backticks and no ${...} sequences.
+// The animation mode ("full" | "calm") is read at runtime from the canvas's
+// data-mode attribute rather than interpolated in.
+const BG_FX_SCRIPT = `<script>
+(function(){
+    var canvas = document.getElementById('bg-fx');
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+    var calm = (canvas.dataset.mode || 'full') === 'calm';
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var CYAN = '39, 201, 215';
+    var linkDist = calm ? 105 : 145;
+    var mouseDist = 190;
+    var speed = calm ? 0.22 : 0.55;
+    var pointAlpha = calm ? 0.24 : 0.55;
+    var lineAlpha = calm ? 0.08 : 0.20;
+
+    var W = 0, H = 0, DPR = 1;
+    var points = [];
+    var mouse = { x: 0, y: 0, active: false };
+    var parX = 0, parY = 0;
+
+    function resize(){
+        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        build();
+    }
+
+    function build(){
+        var count = Math.round((W * H) / 16000);
+        var max = calm ? 45 : 90;
+        if (count > max) count = max;
+        if (count < 12) count = 12;
+        points = [];
+        for (var i = 0; i < count; i++){
+            points.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                vx: (Math.random() - 0.5) * speed,
+                vy: (Math.random() - 0.5) * speed,
+                r: Math.random() * 1.6 + 0.8
+            });
+        }
+    }
+
+    function step(){
+        var tx = mouse.active ? (mouse.x - W / 2) * 0.012 : 0;
+        var ty = mouse.active ? (mouse.y - H / 2) * 0.012 : 0;
+        parX += (tx - parX) * 0.05;
+        parY += (ty - parY) * 0.05;
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.save();
+        ctx.translate(parX, parY);
+
+        var i, j, p, q, dx, dy, d, a;
+        for (i = 0; i < points.length; i++){
+            p = points[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < -20) p.x = W + 20; else if (p.x > W + 20) p.x = -20;
+            if (p.y < -20) p.y = H + 20; else if (p.y > H + 20) p.y = -20;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(' + CYAN + ',' + pointAlpha + ')';
+            ctx.fill();
+        }
+
+        for (i = 0; i < points.length; i++){
+            p = points[i];
+            for (j = i + 1; j < points.length; j++){
+                q = points[j];
+                dx = p.x - q.x; dy = p.y - q.y;
+                d = Math.sqrt(dx * dx + dy * dy);
+                if (d < linkDist){
+                    a = lineAlpha * (1 - d / linkDist);
+                    ctx.strokeStyle = 'rgba(' + CYAN + ',' + a + ')';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(q.x, q.y);
+                    ctx.stroke();
+                }
+            }
+            if (!calm && mouse.active){
+                var mx = mouse.x - parX, my = mouse.y - parY;
+                dx = p.x - mx; dy = p.y - my;
+                d = Math.sqrt(dx * dx + dy * dy);
+                if (d < mouseDist){
+                    a = 0.33 * (1 - d / mouseDist);
+                    ctx.strokeStyle = 'rgba(' + CYAN + ',' + a + ')';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(mx, my);
+                    ctx.stroke();
+                }
+            }
+        }
+        ctx.restore();
+    }
+
+    var running = false;
+    function loop(){
+        if (!running) return;
+        step();
+        requestAnimationFrame(loop);
+    }
+    function start(){
+        if (running || reduce) return;
+        running = true;
+        requestAnimationFrame(loop);
+    }
+    function stop(){ running = false; }
+
+    window.addEventListener('resize', resize);
+    document.addEventListener('mousemove', function(e){
+        mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+        var el = document.documentElement;
+        el.style.setProperty('--mx', ((e.clientX / window.innerWidth) * 100) + '%');
+        el.style.setProperty('--my', ((e.clientY / window.innerHeight) * 100) + '%');
+    });
+    document.addEventListener('mouseleave', function(){ mouse.active = false; });
+    document.addEventListener('visibilitychange', function(){
+        if (document.hidden) stop(); else start();
+    });
+
+    resize();
+    if (reduce) step(); else start();
+})();
+</script>`;
+
 interface LayoutOpts {
   title: string;
   csrfToken: string;
   body: string;
   leaveTracking?: boolean;
+  bg?: "full" | "calm";
 }
 
 export function layout(opts: LayoutOpts): string {
+  const bg = opts.bg ?? "full";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,11 +223,13 @@ export function layout(opts: LayoutOpts): string {
     <script src="/static/timer.js"></script>
 </head>
 <body>
+    <canvas id="bg-fx" data-mode="${bg}" aria-hidden="true"></canvas>
     <img src="/img/Buildmart.jpeg" alt="Buildmart" class="top-left-logo">
     <img src="/img/FIA.jpeg" alt="FIA" class="top-right-logo">
     <img src="/img/club_logo.png" alt="CLUB_LOGO" class="club-logo">
     ${opts.body}
     ${opts.leaveTracking ? LEAVE_TRACKING_SCRIPT : ""}
+    ${BG_FX_SCRIPT}
 </body>
 </html>`;
 }
@@ -286,7 +431,7 @@ export function renderQuestion(o: QuestionOpts): string {
         };
     };
 </script>`;
-  return layout({ title: cap(o.qname), csrfToken: o.csrfToken, body, leaveTracking: true });
+  return layout({ title: cap(o.qname), csrfToken: o.csrfToken, body, leaveTracking: true, bg: "calm" });
 }
 
 interface ReviewOpts {
@@ -337,7 +482,11 @@ interface AdminOpts {
 }
 
 export function renderAdmin(o: AdminOpts): string {
-  const headerCols = o.questions.map((q) => `<th data-sort="string">${esc(cap(q))}</th>`).join("");
+  // Short headers (Q1..Q5) keep the 10-column table inside its card; the full
+  // name stays available on hover via the title attribute.
+  const headerCols = o.questions
+    .map((q) => `<th data-sort="string" title="${esc(cap(q))}">${esc(q.replace(/^question/i, "Q"))}</th>`)
+    .join("");
   const rows = Object.entries(o.submissions)
     .map(([user, subs]) => {
       const info = o.studentInfo[user] || {};
@@ -366,7 +515,7 @@ export function renderAdmin(o: AdminOpts): string {
     ? `<div class="status" style="background: #27ae60; color: white; margin: 1rem 0;">${esc(o.successMessage)}</div>`
     : "";
 
-  const body = `<div class="glass">
+  const body = `<div class="glass" style="max-width: 920px;">
     <div class="header">Admin Dashboard</div>
     ${successBlock}
     <div class="status">Active Users: ${esc(o.userCount)}</div>
@@ -375,7 +524,8 @@ export function renderAdmin(o: AdminOpts): string {
         <input type="text" id="tableSearch" placeholder="Search users..." style="padding:6px;width:240px;">
         <a href="/admin/download-all" style="margin-left:10px;"><button type="button" style="width:auto;padding:6px 14px;background:#2980b9;color:#fff;">Download all (ZIP)</button></a>
     </div>
-    <table id="subTable" style="width:100%;background:rgba(255,255,255,0.5);border-radius:8px;">
+    <div class="table-wrap">
+    <table id="subTable">
         <thead>
         <tr>
             <th data-sort="string">User</th>
@@ -390,6 +540,7 @@ export function renderAdmin(o: AdminOpts): string {
         ${rows}
         </tbody>
     </table>
+    </div>
 
     <div class="status">System Status: <span id="systemStatus">Active users: ${esc(
       o.activeUsers,

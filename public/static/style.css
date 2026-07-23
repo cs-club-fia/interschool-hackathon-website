@@ -6,25 +6,91 @@ body {
     color: #ffffff;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+}
+
+/* Interactive constellation background (see #bg-fx script in render.ts) and a
+   soft cyan spotlight that tracks the cursor. Both sit behind all content. */
+#bg-fx {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%),
+        rgba(39, 201, 215, 0.10), transparent 60%);
+    transition: background 0.12s ease-out;
 }
 
 .glass {
-    background: rgba(0, 0, 0, 0.5);
-    box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    padding: 2rem;
+    position: relative;
+    z-index: 1;
+    background: linear-gradient(160deg, rgba(0, 0, 0, 0.55), rgba(10, 20, 22, 0.42));
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(39, 201, 215, 0.22),
+        0 8px 32px rgba(0, 255, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 18px;
+    border: 1px solid rgba(39, 201, 215, 0.28);
+    padding: 2.25rem;
     margin: 2rem auto;
     max-width: 500px;
+    animation: glass-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.glass::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(39, 201, 215, 0.6), transparent);
+}
+
+@keyframes glass-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.99); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .header {
+    position: relative;
     text-align: center;
     font-size: 2.5rem;
     font-weight: bold;
-    color: #27c9d7;
-    margin-bottom: 1rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.65rem;
+    color: #27c9d7; /* fallback for browsers without background-clip: text */
+    background: linear-gradient(135deg, #27c9d7, #7fffd4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 12px rgba(39, 201, 215, 0.35));
+}
+
+.header::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #27c9d7, transparent);
 }
 
 .timer {
@@ -35,33 +101,60 @@ body {
 }
 
 input, button, select {
-    padding: 0.5rem;
-    border-radius: 8px;
-    border: 1px solid #27c9d7;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(39, 201, 215, 0.5);
     margin-bottom: 1rem;
     width: 100%;
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
     color: #ffffff;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease,
+        background 0.2s ease, transform 0.15s ease;
+}
+
+input::placeholder {
+    color: rgba(230, 230, 230, 0.5);
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #27c9d7;
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 0 0 3px rgba(39, 201, 215, 0.22);
 }
 
 button {
-    background: linear-gradient(90deg, #27c9d7, #000000);
-    color: #333;
+    background: linear-gradient(135deg, #27c9d7, #1a9aa8);
+    color: #ffffff;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.5s ease-in-out; /* Smooth gradient transition */
+    border: 1px solid rgba(39, 201, 215, 0.6);
+    box-shadow: 0 4px 14px rgba(39, 201, 215, 0.25);
 }
 
 button:hover {
-    background: linear-gradient(60deg, #000000, #27c9d7);
-    transition: background 0.5s ease-in-out; /* Smooth gradient transition */
+    background: linear-gradient(135deg, #34d9e6, #1fb0c0);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(39, 201, 215, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(39, 201, 215, 0.3);
+}
+
+button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(39, 201, 215, 0.35), 0 8px 22px rgba(39, 201, 215, 0.3);
 }
 
 .status {
-    padding: 0.5rem;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.2);
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #ffffff;
     margin-bottom: 1rem;
     text-align: center;
@@ -107,15 +200,13 @@ button:hover {
     }
 }
 
-/* Top-corner logos */
+/* Top-corner logos, presented in a subtle frosted "chip" so any logo (busy or
+   transparent) sits cleanly on the dark UI. */
 .top-left-logo, .top-right-logo {
     position: fixed;
     top: 12px; /* space from top edge */
     width: 200px; /* increased 200% */
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    background: rgba(255,255,255,0.02);
     z-index: 1000;
 }
 .top-left-logo {
@@ -130,10 +221,115 @@ button:hover {
     width: 200px; /* increased 200% */
     right: 12px;
     height: auto;
-    border-radius: 8px;
     z-index: 1000;
+}
+
+.top-left-logo, .top-right-logo, .club-logo {
+    box-sizing: border-box;
+    padding: 6px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(39, 201, 215, 0.18);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.top-left-logo:hover, .top-right-logo:hover, .club-logo:hover {
+    transform: translateY(-2px);
+    border-color: rgba(39, 201, 215, 0.4);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 18px rgba(39, 201, 215, 0.25);
 }
 
 @media (max-width: 600px) {
     .top-left-logo, .top-right-logo { width: 104px; top: 8px; } /* increased 200% */
+}
+
+/* Chic finishing touches: cyan text selection + scrollbar to match the theme. */
+::selection {
+    background: rgba(39, 201, 215, 0.35);
+    color: #ffffff;
+}
+
+html {
+    scrollbar-color: rgba(39, 201, 215, 0.5) rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(39, 201, 215, 0.35);
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(39, 201, 215, 0.55);
+    background-clip: content-box;
+}
+
+/* Admin submissions table: themed to the dark UI, compacted so all 10 columns
+   fit inside the card, and wrapped so it scrolls within its own box (never
+   spilling past the card) on narrow screens. */
+.table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(39, 201, 215, 0.15);
+    margin-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+#subTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0, 0, 0, 0.35);
+    color: #e6e6e6;
+    font-size: 0.85rem;
+}
+
+#subTable th, #subTable td {
+    padding: 8px 10px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(39, 201, 215, 0.12);
+}
+
+#subTable thead th {
+    position: sticky;
+    top: 0;
+    background: rgba(39, 201, 215, 0.16);
+    color: #7fffd4;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(39, 201, 215, 0.35);
+    cursor: pointer;
+    user-select: none;
+}
+
+#subTable thead th.asc::after { content: " \2191"; }
+#subTable thead th.desc::after { content: " \2193"; }
+
+#subTable tbody tr:hover {
+    background: rgba(39, 201, 215, 0.06);
+}
+
+#subTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Respect users who prefer reduced motion: no entrance/parallax easing. */
+@media (prefers-reduced-motion: reduce) {
+    .glass {
+        animation: none;
+    }
+    body::before {
+        transition: none;
+    }
 }
