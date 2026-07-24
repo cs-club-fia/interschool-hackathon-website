@@ -16,6 +16,7 @@ import {
 } from "./auth";
 import { QUESTIONS, QUESTION_ORDER, extensionForLanguage } from "./data/questions";
 import * as db from "./db";
+import { runCode } from "./piston";
 import {
   renderLogin,
   renderStartTest,
@@ -247,6 +248,34 @@ async function route(request: Request, env: Env): Promise<Response> {
     return new Response(null, { status: 204 });
   }
 
+  // Run the student's current code against the self-hosted Piston runner and
+  // return its output. The language is taken from the student's own record (not
+  // the client) so nobody can run in an easier language than they registered.
+  // Always returns JSON; failures are reported in the body, never as a 5xx that
+  // the browser would treat as a network error.
+  if (path === "/question/run" && method === "POST") {
+    const guard = requireStudentApi(session);
+    if (guard) return guard;
+    const s = session as Session;
+    if (!(await checkCsrf(request, env, s))) return new Response("", { status: 400 });
+    const form = await request.formData();
+    const code = String(form.get("code") || "");
+    const stdin = String(form.get("stdin") || "");
+    if (!code.trim()) return json({ error: "Write some code before running." }, 200);
+    if (tooLarge(code)) return json({ error: "Code is too large to run (max ~1 MB)." }, 413);
+    const language = findStudent(s.u)?.language || "python";
+    const result = await runCode(env, { language, code, stdin });
+    if (result.error) return json({ error: result.error }, 200);
+    return json({
+      stdout: result.stdout,
+      stderr: result.stderr,
+      output: result.output,
+      exitCode: result.exitCode,
+      signal: result.signal,
+      time: result.time,
+    });
+  }
+
   if (path === "/student/leave" && method === "POST") {
     const guard = requireStudentApi(session);
     if (guard) return guard;
@@ -254,6 +283,16 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!(await checkCsrf(request, env, s))) return new Response("", { status: 400 });
     await db.incrementLeaveCount(env, s.u);
     return new Response(null, { status: 204 });
+  }
+
+  // Poll target: which question (if any) the student should currently be on.
+  // The client redirects into it, which is how an admin "reopen" pulls a student
+  // back to the reopened question.
+  if (path === "/student/active" && method === "GET") {
+    const guard = requireStudentApi(session);
+    if (guard) return guard;
+    const s = session as Session;
+    return json({ q: await db.getActiveQuestion(env, s.u) });
   }
 
   if (path === "/student/paste-flag" && method === "POST") {
@@ -283,7 +322,12 @@ async function route(request: Request, env: Env): Promise<Response> {
         activeUsers: await db.countActiveUsers(env),
         totalSubmissions: await db.countSubmissions(env),
         csrfToken: await csrfTokenFor(env, s),
-        successMessage: url.searchParams.get("reset") === "1" ? "Database successfully reset. All submissions have been cleared." : null,
+        successMessage:
+          url.searchParams.get("reset") === "1"
+            ? "Database successfully reset. All submissions have been cleared."
+            : url.searchParams.get("reopened") === "1"
+              ? "Question reopened. The student has been redirected back to it with their work restored."
+              : null,
       }),
     );
   }
@@ -303,6 +347,19 @@ async function route(request: Request, env: Env): Promise<Response> {
       return new Response("Bad CSRF token", { status: 400 });
     await db.resetSubmissions(env);
     return redirect("/admin?reset=1");
+  }
+
+  if (path === "/admin/reopen" && method === "POST") {
+    const guard = requireAdmin(session);
+    if (guard) return guard;
+    if (!(await checkCsrf(request, env, session as Session)))
+      return new Response("Bad CSRF token", { status: 400 });
+    const form = await request.formData();
+    const username = String(form.get("username") || "");
+    const qname = String(form.get("question") || "");
+    if (!QUESTIONS[qname] || !findStudent(username)) return redirect("/admin");
+    const ok = await db.reopenQuestion(env, username, qname);
+    return redirect(ok ? "/admin?reopened=1" : "/admin");
   }
 
   // --- Admin downloads (the critical feature) ---

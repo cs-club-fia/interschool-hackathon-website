@@ -95,6 +95,93 @@ export async function getSubmissionCode(
   return row ? row.code : null;
 }
 
+// Admin: undo a submission so the student can attempt the question again.
+// Restores the time they had left when it was submitted (falls back to the full
+// duration if that is unknown or already expired, so the reopen is always
+// usable), and puts the previously submitted code back as a draft so they resume
+// where they left off. Returns false if there was nothing submitted to reopen.
+export async function reopenQuestion(env: Env, username: string, qname: string): Promise<boolean> {
+  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const row = await env.DB.prepare(
+    "SELECT submitted, code, start_time, submit_time FROM submissions WHERE username = ? AND question = ?",
+  )
+    .bind(username, qname)
+    .first<{ submitted: number; code: string | null; start_time: number | null; submit_time: number | null }>();
+  if (!row || !row.submitted) return false;
+  const now = nowSec();
+  let newStart = now; // default: fresh full duration
+  if (row.start_time != null && row.submit_time != null) {
+    const elapsed = Number(row.submit_time) - Number(row.start_time);
+    if (elapsed >= 0 && total - elapsed > 0) newStart = now - elapsed; // preserve remaining time
+  }
+  await env.DB.prepare(
+    "UPDATE submissions SET submitted = 0, submit_time = NULL, start_time = ? WHERE username = ? AND question = ?",
+  )
+    .bind(newStart, username, qname)
+    .run();
+  const prior = row.code && row.code !== "# auto-submitted empty file\n" ? row.code : "";
+  if (prior) await saveDraft(env, username, qname, prior);
+  return true;
+}
+
+// The question the student should currently be on: the first (in order) that has
+// been started, is not submitted, and still has time left. Used by the client
+// poll to auto-redirect a student into a question the admin just reopened.
+// Never-started questions have no start_time, so this won't hijack the normal
+// "click Start" flow.
+export async function getActiveQuestion(env: Env, username: string): Promise<string | null> {
+  const { results } = await env.DB.prepare(
+    "SELECT question, submitted, start_time FROM submissions WHERE username = ?",
+  )
+    .bind(username)
+    .all<{ question: string; submitted: number; start_time: number | null }>();
+  const byQ: Record<string, { submitted: number; start_time: number | null }> = {};
+  for (const r of results) byQ[r.question] = r;
+  const now = nowSec();
+  for (const q of QUESTION_ORDER) {
+    const r = byQ[q];
+    if (!r || r.submitted || r.start_time == null) continue;
+    const total = QUESTIONS[q]?.seconds ?? 0;
+    if (total - (now - Number(r.start_time)) > 0) return q;
+  }
+  return null;
+}
+
+// --- Student language preference (chosen on the login screen) ---
+// Set the student's language at login, but LOCK it once the test has started --
+// drafts and submissions are language-specific, so flipping languages mid-test
+// would corrupt the editor mode and download extensions. Before the first
+// question is opened the student can still change it by logging in again.
+export async function setStudentLanguageOnLogin(
+  env: Env,
+  username: string,
+  language: string,
+): Promise<void> {
+  if (await hasStarted(env, username)) return; // locked
+  await env.DB.prepare(
+    "INSERT INTO student_prefs (username, language) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET language = excluded.language",
+  )
+    .bind(username, language)
+    .run();
+}
+
+export async function getStudentLanguage(env: Env, username: string): Promise<string | null> {
+  const row = await env.DB.prepare("SELECT language FROM student_prefs WHERE username = ?")
+    .bind(username)
+    .first<{ language: string }>();
+  return row ? row.language : null;
+}
+
+// username -> chosen language, for the admin dashboard + bulk downloads.
+export async function getStudentLanguages(env: Env): Promise<Record<string, string>> {
+  const { results } = await env.DB.prepare(
+    "SELECT username, language FROM student_prefs",
+  ).all<{ username: string; language: string }>();
+  const map: Record<string, string> = {};
+  for (const r of results) map[r.username] = r.language;
+  return map;
+}
+
 export async function hasStarted(env: Env, username: string): Promise<boolean> {
   const row = await env.DB.prepare(
     "SELECT COUNT(*) AS n FROM submissions WHERE username = ?",

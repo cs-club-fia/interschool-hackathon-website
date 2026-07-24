@@ -1,16 +1,18 @@
 {
-  "_comment": "PLACEHOLDER credentials -- MUST be rotated before any real/public deployment (these hashes are in a public repo). To set a team/admin password: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. language must be one of: python | cpp | java. See README for the dev-only default passwords.",
+  "_comment": "PLACEHOLDER credentials -- MUST be rotated before any real/public deployment (these hashes are in a public repo). To set a team/admin password: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. `grade` is a free-text label shown to admins. `language` is only the fallback default now -- students pick their language on the login screen. See README for the dev-only default passwords.",
   "students": [
     {
       "username": "team1",
       "password_hash": "pbkdf2$100000$SI3XQLe3kgvNA7N//JD2Uw==$3Fj+LhYxEMeJZwsNXgrqG4oBH28JK0FJ8FaTO71im08=",
       "school": "School A",
+      "grade": "10",
       "language": "python"
     },
     {
       "username": "team2",
       "password_hash": "pbkdf2$100000$IvYPUUWQy4X4NljpWU2qcw==$St5otPndeR7CRsFha0XBGP8uc4tbapadXjd/AR+5krI=",
       "school": "School B",
+      "grade": "11",
       "language": "python"
     }
   ],

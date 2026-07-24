@@ -25,7 +25,21 @@ export const LANGUAGE_EXTENSIONS: Record<string, string> = {
   cpp: "cpp",
   java: "java",
 };
+// Display names for the login-screen language dropdown (cap() would mangle "C++").
+export const LANGUAGE_LABELS: Record<string, string> = {
+  python: "Python",
+  cpp: "C++",
+  java: "Java",
+};
 export const DEFAULT_LANGUAGE = "python";
+
+// Normalize an arbitrary (user-supplied) language string to a supported key,
+// falling back to a provided default (then Python).
+export function normalizeLanguage(lang: string | undefined | null, fallback?: string): string {
+  if (lang && LANGUAGE_EXTENSIONS[lang]) return lang;
+  if (fallback && LANGUAGE_EXTENSIONS[fallback]) return fallback;
+  return DEFAULT_LANGUAGE;
+}
 
 // Timezone for displaying submission timestamps on the review page. The Worker
 // runtime is UTC, so set this to the event's IANA timezone.

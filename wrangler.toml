@@ -20,3 +20,13 @@ migrations_dir = "migrations"
 # SECRET_KEY (HMAC signing for session cookies) is NOT stored here.
 # Set it as a secret:  wrangler secret put SECRET_KEY
 # For local `wrangler dev`, put it in .dev.vars (gitignored).
+
+# PISTON_URL points the question-page "Run" button at your self-hosted Piston
+# instance. It is just a URL (not a secret), so either set it as a plaintext var
+# below, or -- if you'd rather keep the host private -- as a secret
+# (`wrangler secret put PISTON_URL`). For local `wrangler dev`, add it to
+# .dev.vars. Value is the host or the /api/v2/piston base; both are accepted.
+# If unset, the Run panel shows "Code runner is not configured" and nothing else
+# breaks.
+# [vars]
+# PISTON_URL = "https://piston.your-host.example.com"
