@@ -2,9 +2,85 @@
 // come from bundled config (questions.ts); D1 holds only runtime state.
 
 import type { Env } from "./types";
-import { QUESTIONS, QUESTION_ORDER } from "./data/questions";
+import { BANK_IDS_BY_DIFFICULTY, templateForGrade, type Difficulty } from "./data/questions";
 
 const nowSec = () => Date.now() / 1000;
+
+// --- Per-student assignment (drawn from the bank at Start) ---
+export interface AssignmentSlot {
+  position: number;
+  questionId: string;
+  seconds: number;
+}
+
+// The student's ordered assigned questions (empty until they Start).
+export async function getAssignment(env: Env, username: string): Promise<AssignmentSlot[]> {
+  const { results } = await env.DB.prepare(
+    "SELECT position, question_id, seconds FROM assignments WHERE username = ? ORDER BY position",
+  )
+    .bind(username)
+    .all<{ position: number; question_id: string; seconds: number }>();
+  return results.map((r) => ({
+    position: Number(r.position),
+    questionId: r.question_id,
+    seconds: Number(r.seconds),
+  }));
+}
+
+// Fisher-Yates shuffle (Math.random is fine here -- this is fairness, not security).
+function shuffle<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Draw (once) the student's question set for their grade and persist it. Called
+// at Start; idempotent -- if an assignment already exists it is returned as-is,
+// so a refresh/relogin never re-rolls their questions.
+export async function drawAssignment(
+  env: Env,
+  username: string,
+  grade: string | undefined | null,
+): Promise<AssignmentSlot[]> {
+  const existing = await getAssignment(env, username);
+  if (existing.length) return existing;
+
+  const slots = templateForGrade(grade);
+  const pools: Record<Difficulty, string[]> = {
+    easy: shuffle([...BANK_IDS_BY_DIFFICULTY.easy]),
+    medium: shuffle([...BANK_IDS_BY_DIFFICULTY.medium]),
+    hard: shuffle([...BANK_IDS_BY_DIFFICULTY.hard]),
+  };
+  const idx: Record<Difficulty, number> = { easy: 0, medium: 0, hard: 0 };
+  const stmts = [];
+  for (let pos = 0; pos < slots.length; pos++) {
+    const d = slots[pos].difficulty;
+    const questionId = pools[d][idx[d]++];
+    if (!questionId) throw new Error(`Bank exhausted for '${d}' drawing grade ${grade}.`);
+    stmts.push(
+      env.DB.prepare(
+        "INSERT OR IGNORE INTO assignments (username, position, question_id, seconds) VALUES (?, ?, ?, ?)",
+      ).bind(username, pos, questionId, slots[pos].seconds),
+    );
+  }
+  await env.DB.batch(stmts);
+  // Re-read so the result reflects exactly what is stored (authoritative even if
+  // two Start requests raced -- INSERT OR IGNORE keeps the first draw per slot).
+  return getAssignment(env, username);
+}
+
+// The time limit (seconds) for one of the student's assigned questions. 0 if the
+// question is not in their assignment (which also blocks access).
+async function slotSeconds(env: Env, username: string, qname: string): Promise<number> {
+  const row = await env.DB.prepare(
+    "SELECT seconds FROM assignments WHERE username = ? AND question_id = ?",
+  )
+    .bind(username, qname)
+    .first<{ seconds: number }>();
+  return row ? Number(row.seconds) : 0;
+}
 
 // --- Timers / access ---
 export async function startTimer(env: Env, username: string, qname: string): Promise<void> {
@@ -17,7 +93,7 @@ export async function startTimer(env: Env, username: string, qname: string): Pro
 }
 
 export async function getTimeLeft(env: Env, username: string, qname: string): Promise<number> {
-  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const total = await slotSeconds(env, username, qname);
   const row = await env.DB.prepare(
     "SELECT start_time FROM submissions WHERE username = ? AND question = ?",
   )
@@ -31,7 +107,8 @@ export async function getTimeLeft(env: Env, username: string, qname: string): Pr
 }
 
 export async function canAccess(env: Env, username: string, qname: string): Promise<boolean> {
-  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const total = await slotSeconds(env, username, qname);
+  if (total <= 0) return false; // not part of this student's assignment
   const row = await env.DB.prepare(
     "SELECT submitted, start_time FROM submissions WHERE username = ? AND question = ?",
   )
@@ -49,7 +126,7 @@ export async function getSubmitState(
   username: string,
   qname: string,
 ): Promise<{ submitted: boolean; timeLeft: number }> {
-  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const total = await slotSeconds(env, username, qname);
   const row = await env.DB.prepare(
     "SELECT submitted, start_time FROM submissions WHERE username = ? AND question = ?",
   )
@@ -101,7 +178,7 @@ export async function getSubmissionCode(
 // usable), and puts the previously submitted code back as a draft so they resume
 // where they left off. Returns false if there was nothing submitted to reopen.
 export async function reopenQuestion(env: Env, username: string, qname: string): Promise<boolean> {
-  const total = QUESTIONS[qname]?.seconds ?? 0;
+  const total = await slotSeconds(env, username, qname);
   const row = await env.DB.prepare(
     "SELECT submitted, code, start_time, submit_time FROM submissions WHERE username = ? AND question = ?",
   )
@@ -130,6 +207,8 @@ export async function reopenQuestion(env: Env, username: string, qname: string):
 // Never-started questions have no start_time, so this won't hijack the normal
 // "click Start" flow.
 export async function getActiveQuestion(env: Env, username: string): Promise<string | null> {
+  const assignment = await getAssignment(env, username);
+  if (!assignment.length) return null;
   const { results } = await env.DB.prepare(
     "SELECT question, submitted, start_time FROM submissions WHERE username = ?",
   )
@@ -138,11 +217,10 @@ export async function getActiveQuestion(env: Env, username: string): Promise<str
   const byQ: Record<string, { submitted: number; start_time: number | null }> = {};
   for (const r of results) byQ[r.question] = r;
   const now = nowSec();
-  for (const q of QUESTION_ORDER) {
-    const r = byQ[q];
+  for (const slot of assignment) {
+    const r = byQ[slot.questionId];
     if (!r || r.submitted || r.start_time == null) continue;
-    const total = QUESTIONS[q]?.seconds ?? 0;
-    if (total - (now - Number(r.start_time)) > 0) return q;
+    if (slot.seconds - (now - Number(r.start_time)) > 0) return slot.questionId;
   }
   return null;
 }
@@ -182,67 +260,80 @@ export async function getStudentLanguages(env: Env): Promise<Record<string, stri
   return map;
 }
 
+// "Started the test" == an assignment has been drawn (which happens at Start).
+// The language pref locks on this, and the dashboard shows Start vs. progress.
 export async function hasStarted(env: Env, username: string): Promise<boolean> {
   const row = await env.DB.prepare(
-    "SELECT COUNT(*) AS n FROM submissions WHERE username = ?",
+    "SELECT COUNT(*) AS n FROM assignments WHERE username = ?",
   )
     .bind(username)
     .first<{ n: number }>();
   return !!row && row.n > 0;
 }
 
-// Per-question submitted map for one student (all questions default false).
+// submitted flag per assigned question id, in assignment order.
 export async function getStudentSubmitted(
   env: Env,
   username: string,
 ): Promise<Record<string, boolean>> {
+  const assignment = await getAssignment(env, username);
   const map: Record<string, boolean> = {};
-  for (const q of QUESTION_ORDER) map[q] = false;
+  for (const s of assignment) map[s.questionId] = false;
   const { results } = await env.DB.prepare(
     "SELECT question, submitted FROM submissions WHERE username = ?",
   )
     .bind(username)
     .all<{ question: string; submitted: number }>();
-  for (const r of results) if (r.submitted) map[r.question] = true;
+  for (const r of results) if (r.submitted && r.question in map) map[r.question] = true;
   return map;
 }
 
-// submitted + submit_time per question, for the review page.
+// submitted + submit_time per assigned question id, for the review page.
 export async function getStudentReview(
   env: Env,
   username: string,
 ): Promise<Record<string, { submitted: boolean; submitTime: number | null }>> {
+  const assignment = await getAssignment(env, username);
   const map: Record<string, { submitted: boolean; submitTime: number | null }> = {};
-  for (const q of QUESTION_ORDER) map[q] = { submitted: false, submitTime: null };
+  for (const s of assignment) map[s.questionId] = { submitted: false, submitTime: null };
   const { results } = await env.DB.prepare(
     "SELECT question, submitted, submit_time FROM submissions WHERE username = ?",
   )
     .bind(username)
     .all<{ question: string; submitted: number; submit_time: number | null }>();
   for (const r of results) {
-    if (map[r.question]) {
+    if (r.question in map) {
       map[r.question] = { submitted: !!r.submitted, submitTime: r.submit_time };
     }
   }
   return map;
 }
 
-// Full matrix username -> {question -> submitted}. Seeds every configured student.
-export async function getAllSubmissions(
-  env: Env,
-  students: string[],
-): Promise<Record<string, Record<string, boolean>>> {
-  const result: Record<string, Record<string, boolean>> = {};
-  const blank = () => Object.fromEntries(QUESTION_ORDER.map((q) => [q, false]));
-  for (const u of students) result[u] = blank();
+// Admin: every student's ordered assignment (username -> slots). Empty for
+// students who haven't started.
+export async function getAssignmentsByUser(env: Env): Promise<Record<string, AssignmentSlot[]>> {
   const { results } = await env.DB.prepare(
-    "SELECT username, question, submitted FROM submissions",
-  ).all<{ username: string; question: string; submitted: number }>();
+    "SELECT username, position, question_id, seconds FROM assignments ORDER BY username, position",
+  ).all<{ username: string; position: number; question_id: string; seconds: number }>();
+  const map: Record<string, AssignmentSlot[]> = {};
   for (const r of results) {
-    if (!result[r.username]) result[r.username] = blank();
-    if (r.submitted) result[r.username][r.question] = true;
+    (map[r.username] ||= []).push({
+      position: Number(r.position),
+      questionId: r.question_id,
+      seconds: Number(r.seconds),
+    });
   }
-  return result;
+  return map;
+}
+
+// Admin: username -> set of submitted question ids.
+export async function getSubmittedByUser(env: Env): Promise<Record<string, Set<string>>> {
+  const { results } = await env.DB.prepare(
+    "SELECT username, question FROM submissions WHERE submitted = 1",
+  ).all<{ username: string; question: string }>();
+  const map: Record<string, Set<string>> = {};
+  for (const r of results) (map[r.username] ||= new Set<string>()).add(r.question);
+  return map;
 }
 
 // Every stored submission (for bulk export).
@@ -273,6 +364,7 @@ export async function resetSubmissions(env: Env): Promise<void> {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM submissions"),
     env.DB.prepare("DELETE FROM drafts"),
+    env.DB.prepare("DELETE FROM assignments"),
   ]);
 }
 

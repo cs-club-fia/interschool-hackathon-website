@@ -327,7 +327,7 @@ export function renderStartTest(username: string, csrfToken: string): string {
         <ul style="list-style-type: none; padding: 0; color:var(--text-muted); font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
             <li style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--primary);"></span>
-                5 programming questions in sequence
+                6 programming questions in sequence, chosen for your grade
             </li>
             <li style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--primary);"></span>
@@ -351,8 +351,7 @@ export function renderStartTest(username: string, csrfToken: string): string {
             </li>
         </ul>
     </div>
-    <form method="get" action="/question">
-        <input type="hidden" name="qname" value="question1">
+    <form method="get" action="/begin">
         <button type="submit" class="start-button">Start Test</button>
     </form>
 </div>
@@ -396,7 +395,7 @@ export function renderDashboard(o: DashboardOpts): string {
         action = `<span style="color: #64748B; background: #161F2E; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 500;">Locked</span>`;
       }
       return `<div class="question-status">
-        <span style="font-weight: 600; color: var(--text);">${esc(cap(q))}</span>
+        <span style="font-weight: 600; color: var(--text);">Question ${idx + 1}</span>
         ${action}
     </div>`;
     })
@@ -722,7 +721,7 @@ interface ReviewOpts {
 
 export function renderReview(o: ReviewOpts): string {
   const items = o.order
-    .map((qname) => {
+    .map((qname, idx) => {
       const d = o.review[qname];
       const status = d.submitted
         ? `<span style="display:inline-flex; align-items:center; gap:0.25rem; font-weight:600; color:#34D399; background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.3); padding:0.25rem 0.75rem; border-radius:9999px; font-size:0.85rem;">
@@ -732,7 +731,7 @@ export function renderReview(o: ReviewOpts): string {
              &#10007; Not attempted
            </span>`;
       return `<div class="question-status">
-        <span style="font-weight: 600; color: var(--text);">Question ${esc(qname.slice(-1))}</span>
+        <span style="font-weight: 600; color: var(--text);">Question ${idx + 1}</span>
         ${status}
     </div>`;
     })
@@ -752,47 +751,63 @@ export function renderReview(o: ReviewOpts): string {
 
 interface AdminOpts {
   userCount: number;
-  submissions: Record<string, Record<string, boolean>>;
-  questions: string[];
-  studentInfo: Record<string, { school?: string; grade?: string; language?: string }>;
-  leaveCounts: Record<string, number>;
-  pasteFlagCounts: Record<string, number>;
+  slotCount: number;
+  rows: Array<{
+    username: string;
+    school?: string;
+    grade?: string;
+    language?: string;
+    leaveCount: number;
+    pasteFlags: number;
+    slots: Array<{ questionId: string; title: string; difficulty: string; submitted: boolean }>;
+  }>;
   activeUsers: number;
   totalSubmissions: number;
   csrfToken: string;
   successMessage?: string | null;
 }
 
+const DIFF_COLORS: Record<string, string> = {
+  easy: "#34D399",
+  medium: "#FBBF24",
+  hard: "#F87171",
+};
+
 export function renderAdmin(o: AdminOpts): string {
-  const headerCols = o.questions
-    .map((q) => `<th data-sort="string" title="${esc(cap(q))}">${esc(q.replace(/^question/i, "Q"))}</th>`)
-    .join("");
-  const rows = Object.entries(o.submissions)
-    .map(([user, subs]) => {
-      const info = o.studentInfo[user] || {};
-      const cells = o.questions
-        .map((q) => {
-          if (subs[q]) {
-            return `<td style="white-space:nowrap;"><a href="/admin/download/${encodeURIComponent(
-              user,
-            )}/${encodeURIComponent(
-              q,
-            )}" title="Download submission" style="color:#34D399;text-decoration:none;font-weight:bold;">&#10004;</a><form method="post" action="/admin/reopen" style="display:inline;margin:0;" onsubmit="return confirm('Reopen this question for this student? They will be sent back to it with a timer and their work restored.');"><input type="hidden" name="csrf_token" value="${esc(
+  // Slot-based columns (Q1..Qn): every student has a different random set, so a
+  // column is a *position*, not a shared question. Difficulty is shown to the
+  // admin only (as a coloured E/M/H badge + tooltip with the real question).
+  const headerCols = Array.from(
+    { length: o.slotCount },
+    (_, i) => `<th data-sort="string">Q${i + 1}</th>`,
+  ).join("");
+  const rows = o.rows
+    .map((r) => {
+      const cells = Array.from({ length: o.slotCount }, (_, i) => {
+        const slot = r.slots[i];
+        if (!slot) return `<td></td>`;
+        const color = DIFF_COLORS[slot.difficulty] || "#64748B";
+        const letter = slot.difficulty ? slot.difficulty.charAt(0).toUpperCase() : "?";
+        const tip = esc(`${slot.title} [${slot.difficulty}]`);
+        const badge = `<span title="${tip}" style="color:${color};font-weight:700;font-size:0.7rem;margin-right:5px;">${letter}</span>`;
+        const mark = slot.submitted
+          ? `<a href="/admin/download/${encodeURIComponent(r.username)}/${encodeURIComponent(
+              slot.questionId,
+            )}" title="Download: ${tip}" style="color:#34D399;text-decoration:none;font-weight:bold;">&#10004;</a><form method="post" action="/admin/reopen" style="display:inline;margin:0;" onsubmit="return confirm('Reopen this question for this student? They will be sent back to it with a timer and their work restored.');"><input type="hidden" name="csrf_token" value="${esc(
               o.csrfToken,
-            )}"><input type="hidden" name="username" value="${esc(user)}"><input type="hidden" name="question" value="${esc(
-              q,
-            )}"><button type="submit" title="Reopen (undo submission)" style="width:auto;margin:0 0 0 6px;padding:0 5px;background:none;border:none;box-shadow:none;color:#FBBF24;cursor:pointer;font-size:1rem;line-height:1;">&#8634;</button></form></td>`;
-          }
-          return `<td><span style="color:#64748B;">&#10008;</span></td>`;
-        })
-        .join("");
+            )}"><input type="hidden" name="username" value="${esc(r.username)}"><input type="hidden" name="question" value="${esc(
+              slot.questionId,
+            )}"><button type="submit" title="Reopen (undo submission)" style="width:auto;margin:0 0 0 6px;padding:0 5px;background:none;border:none;box-shadow:none;color:#FBBF24;cursor:pointer;font-size:1rem;line-height:1;">&#8634;</button></form>`
+          : `<span style="color:#64748B;">&#10008;</span>`;
+        return `<td style="white-space:nowrap;">${badge}${mark}</td>`;
+      }).join("");
       return `<tr>
-            <td style="font-weight:600;">${esc(user)}</td>
-            <td>${esc(info.school || "")}</td>
-            <td>${esc(info.grade || "")}</td>
-            <td>${esc(cap(info.language || ""))}</td>
-            <td>${esc(o.leaveCounts[user] ?? 0)}</td>
-            <td>${esc(o.pasteFlagCounts[user] ?? 0)}</td>
+            <td style="font-weight:600;">${esc(r.username)}</td>
+            <td>${esc(r.school || "")}</td>
+            <td>${esc(r.grade || "")}</td>
+            <td>${esc(cap(r.language || ""))}</td>
+            <td>${esc(r.leaveCount)}</td>
+            <td>${esc(r.pasteFlags)}</td>
             ${cells}
         </tr>`;
     })
@@ -819,6 +834,7 @@ export function renderAdmin(o: AdminOpts): string {
         <input type="text" id="tableSearch" placeholder="Search team or school..." style="margin:0; max-width:280px;">
         <a href="/admin/download-all" style="text-decoration:none;"><button type="button" style="width:auto; padding:0.625rem 1.25rem; background:#3B82F6; color:#fff; border-color:#2563EB;">Download all (ZIP)</button></a>
     </div>
+    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">Each student's questions are random. Difficulty (admin-only): <span style="color:#34D399;font-weight:700;">E</span> easy &middot; <span style="color:#FBBF24;font-weight:700;">M</span> medium &middot; <span style="color:#F87171;font-weight:700;">H</span> hard &mdash; hover a cell for the actual question.</div>
     <div class="table-wrap">
     <table id="subTable">
         <thead>

@@ -14,7 +14,7 @@ import {
   findAdmin,
   allStudents,
 } from "./auth";
-import { QUESTIONS, QUESTION_ORDER, extensionForLanguage, normalizeLanguage } from "./data/questions";
+import { getQuestion, extensionForLanguage, normalizeLanguage } from "./data/questions";
 import * as db from "./db";
 import { runCode } from "./piston";
 import {
@@ -46,22 +46,40 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-function nextQuestion(qname: string): string | null {
-  const idx = QUESTION_ORDER.indexOf(qname);
-  if (idx < 0 || idx >= QUESTION_ORDER.length - 1) return null;
-  return QUESTION_ORDER[idx + 1];
+// Next question in the student's own assignment order (null if last).
+function nextQuestion(assignmentIds: string[], qname: string): string | null {
+  const idx = assignmentIds.indexOf(qname);
+  if (idx < 0 || idx >= assignmentIds.length - 1) return null;
+  return assignmentIds[idx + 1];
 }
 
-function studentInfoMap(
-  langs: Record<string, string>,
-): Record<string, { school?: string; grade?: string; language?: string }> {
-  const map: Record<string, { school?: string; grade?: string; language?: string }> = {};
-  for (const s of allStudents()) {
-    // The live language is the login-screen choice (student_prefs); fall back to
-    // the bundled config value for a student who hasn't logged in yet.
-    map[s.username] = { school: s.school, grade: s.grade, language: langs[s.username] || s.language };
-  }
-  return map;
+// First not-yet-submitted question in assignment order (null if all done).
+function currentQuestionOf(assignmentIds: string[], submitted: Record<string, boolean>): string | null {
+  for (const id of assignmentIds) if (!submitted[id]) return id;
+  return null;
+}
+
+// Prepend the question (title + full prompt) as a language-appropriate comment
+// block above a downloaded submission, so a grader always knows what the student
+// was solving -- essential now that every student's questions are random.
+function withQuestionHeader(
+  code: string,
+  q: { title: string; text: string } | undefined,
+  language: string,
+): string {
+  if (!q) return code;
+  const p = language === "python" ? "#" : "//";
+  const bar = `${p} ${"=".repeat(58)}`;
+  const lines = [
+    bar,
+    `${p} Question: ${q.title}`,
+    bar,
+    ...q.text.split("\n").map((l) => (l ? `${p} ${l}` : p)),
+    bar,
+    "",
+    "",
+  ];
+  return lines.join("\n") + code;
 }
 
 // Effective language for one student: their login-screen choice, else the
@@ -141,14 +159,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!(await db.hasStarted(env, s.u))) {
       return html(renderStartTest(s.u, await csrfTokenFor(env, s)));
     }
+    const assignmentIds = (await db.getAssignment(env, s.u)).map((a) => a.questionId);
     const submitted = await db.getStudentSubmitted(env, s.u);
-    let currentQuestion: string | null = null;
-    for (const q of QUESTION_ORDER) {
-      if (!submitted[q]) {
-        currentQuestion = q;
-        break;
-      }
-    }
     const student = findStudent(s.u);
     return html(
       renderDashboard({
@@ -156,9 +168,9 @@ async function route(request: Request, env: Env): Promise<Response> {
         school: student?.school,
         grade: student?.grade,
         language: await langFor(env, s.u),
-        questions: QUESTION_ORDER,
+        questions: assignmentIds,
         submitted,
-        currentQuestion,
+        currentQuestion: currentQuestionOf(assignmentIds, submitted),
         csrfToken: await csrfTokenFor(env, s),
       }),
     );
@@ -171,12 +183,28 @@ async function route(request: Request, env: Env): Promise<Response> {
     return html(renderStartTest(s.u, await csrfTokenFor(env, s)));
   }
 
+  // Begin the test: draw (once) this student's random question set for their
+  // grade, then send them to their current question. Idempotent -- a refresh
+  // returns the same set. Reached from the "Start Test" button.
+  if (path === "/begin" && method === "GET") {
+    const guard = requireStudent(session);
+    if (guard) return guard;
+    const s = session as Session;
+    const grade = findStudent(s.u)?.grade;
+    const assignment = await db.drawAssignment(env, s.u, grade);
+    const ids = assignment.map((a) => a.questionId);
+    const submitted = await db.getStudentSubmitted(env, s.u);
+    const current = currentQuestionOf(ids, submitted);
+    return redirect(current ? `/question?qname=${encodeURIComponent(current)}` : "/review");
+  }
+
   if (path === "/question" && method === "GET") {
     const guard = requireStudent(session);
     if (guard) return guard;
     const s = session as Session;
     const qname = url.searchParams.get("qname");
-    if (!qname || !QUESTIONS[qname]) return redirect("/dashboard");
+    const q = qname ? getQuestion(qname) : undefined;
+    if (!qname || !q) return redirect("/dashboard");
     if (!(await db.canAccess(env, s.u, qname))) return redirect("/review");
     await db.startTimer(env, s.u, qname);
     const lang = await langFor(env, s.u);
@@ -184,7 +212,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       renderQuestion({
         qname,
         timeLeft: await db.getTimeLeft(env, s.u, qname),
-        questionText: QUESTIONS[qname].text,
+        questionText: q.text,
         expectedExt: extensionForLanguage(lang),
         language: lang,
         draftCode: await db.getDraft(env, s.u, qname),
@@ -200,7 +228,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!(await checkCsrf(request, env, session as Session)))
       return new Response("Bad CSRF token", { status: 400 });
     const qname = url.searchParams.get("qname");
-    if (!qname || !QUESTIONS[qname]) return redirect("/dashboard");
+    const q = qname ? getQuestion(qname) : undefined;
+    if (!qname || !q) return redirect("/dashboard");
     const form = await request.formData();
     const autoSubmit = form.get("auto_submit") === "1";
 
@@ -212,12 +241,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (state.submitted) return redirect("/review");
     if (!autoSubmit && state.timeLeft <= 0) return redirect("/review");
 
+    const assignmentIds = (await db.getAssignment(env, s.u)).map((a) => a.questionId);
+
     if (autoSubmit) {
       let code = String(form.get("code") || "");
       if (!code) code = (await db.getDraft(env, s.u, qname)) || "# auto-submitted empty file\n";
       code = clampCode(code);
       await db.submitAnswer(env, s.u, qname, code);
-      const next = nextQuestion(qname);
+      const next = nextQuestion(assignmentIds, qname);
       return redirect(next ? `/question?qname=${encodeURIComponent(next)}` : "/review");
     }
 
@@ -229,7 +260,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         renderQuestion({
           qname,
           timeLeft: await db.getTimeLeft(env, s.u, qname),
-          questionText: QUESTIONS[qname].text,
+          questionText: q.text,
           expectedExt: extensionForLanguage(lang),
           language: lang,
           draftCode: clampCode(code),
@@ -240,7 +271,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       );
     }
     await db.submitAnswer(env, s.u, qname, code);
-    const next = nextQuestion(qname);
+    const next = nextQuestion(assignmentIds, qname);
     return redirect(next ? `/question?qname=${encodeURIComponent(next)}` : "/review");
   }
 
@@ -248,10 +279,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     const guard = requireStudent(session);
     if (guard) return guard;
     const s = session as Session;
+    const order = (await db.getAssignment(env, s.u)).map((a) => a.questionId);
     return html(
       renderReview({
         review: await db.getStudentReview(env, s.u),
-        order: QUESTION_ORDER,
+        order,
         csrfToken: await csrfTokenFor(env, s),
       }),
     );
@@ -331,16 +363,43 @@ async function route(request: Request, env: Env): Promise<Response> {
     const guard = requireAdmin(session);
     if (guard) return guard;
     const s = session as Session;
-    const students = allStudents().map((x) => x.username);
-    const submissions = await db.getAllSubmissions(env, students);
+    const students = allStudents();
+    const usernames = students.map((x) => x.username);
+    const assignmentsByUser = await db.getAssignmentsByUser(env);
+    const submittedByUser = await db.getSubmittedByUser(env);
+    const langs = await db.getStudentLanguages(env);
+    const leaveCounts = await db.getLeaveCounts(env, usernames);
+    const pasteFlagCounts = await db.getPasteFlagCounts(env, usernames);
+    let slotCount = 0;
+    const rows = students.map((st) => {
+      const asg = assignmentsByUser[st.username] || [];
+      slotCount = Math.max(slotCount, asg.length);
+      const sub = submittedByUser[st.username] || new Set<string>();
+      const slots = asg.map((a) => {
+        const q = getQuestion(a.questionId);
+        return {
+          questionId: a.questionId,
+          title: q?.title || a.questionId,
+          difficulty: q?.difficulty || "",
+          submitted: sub.has(a.questionId),
+        };
+      });
+      return {
+        username: st.username,
+        school: st.school,
+        grade: st.grade,
+        language: langs[st.username] || st.language,
+        leaveCount: leaveCounts[st.username] ?? 0,
+        pasteFlags: pasteFlagCounts[st.username] ?? 0,
+        slots,
+      };
+    });
+    if (slotCount === 0) slotCount = 6;
     return html(
       renderAdmin({
         userCount: await db.countActiveUsers(env),
-        submissions,
-        questions: QUESTION_ORDER,
-        studentInfo: studentInfoMap(await db.getStudentLanguages(env)),
-        leaveCounts: await db.getLeaveCounts(env, students),
-        pasteFlagCounts: await db.getPasteFlagCounts(env, students),
+        slotCount,
+        rows,
         activeUsers: await db.countActiveUsers(env),
         totalSubmissions: await db.countSubmissions(env),
         csrfToken: await csrfTokenFor(env, s),
@@ -379,7 +438,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const form = await request.formData();
     const username = String(form.get("username") || "");
     const qname = String(form.get("question") || "");
-    if (!QUESTIONS[qname] || !findStudent(username)) return redirect("/admin");
+    if (!getQuestion(qname) || !findStudent(username)) return redirect("/admin");
     const ok = await db.reopenQuestion(env, username, qname);
     return redirect(ok ? "/admin?reopened=1" : "/admin");
   }
@@ -394,9 +453,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     const qname = decodeURIComponent(parts[4]);
     const code = await db.getSubmissionCode(env, username, qname);
     if (code == null) return new Response("File not found", { status: 404 });
-    const ext = extensionForLanguage(await langFor(env, username));
+    const language = await langFor(env, username);
+    const ext = extensionForLanguage(language);
+    const body = withQuestionHeader(code, getQuestion(qname), language);
     const filename = `${safeName(username)}_${safeName(qname)}.${ext}`;
-    return new Response(code, {
+    return new Response(body, {
       status: 200,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
@@ -410,10 +471,21 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (guard) return guard;
     const all = await db.getAllSubmittedCode(env);
     const langs = await db.getStudentLanguages(env);
+    const assignmentsByUser = await db.getAssignmentsByUser(env);
+    // username -> questionId -> slot position, for stable "Q<n>_" filenames.
+    const posOf: Record<string, Record<string, number>> = {};
+    for (const [u, slots] of Object.entries(assignmentsByUser)) {
+      posOf[u] = {};
+      for (const sl of slots) posOf[u][sl.questionId] = sl.position;
+    }
     const files: Record<string, Uint8Array> = {};
     for (const row of all) {
-      const ext = extensionForLanguage(langs[row.username] || findStudent(row.username)?.language);
-      files[`${safeName(row.username)}/${safeName(row.question)}.${ext}`] = strToU8(row.code);
+      const language = normalizeLanguage(langs[row.username], findStudent(row.username)?.language);
+      const ext = extensionForLanguage(language);
+      const pos = posOf[row.username]?.[row.question];
+      const slotLabel = pos != null ? `Q${pos + 1}_` : "";
+      const body = withQuestionHeader(row.code, getQuestion(row.question), language);
+      files[`${safeName(row.username)}/${slotLabel}${safeName(row.question)}.${ext}`] = strToU8(body);
     }
     if (Object.keys(files).length === 0) {
       files["README.txt"] = strToU8("No submissions yet.\n");

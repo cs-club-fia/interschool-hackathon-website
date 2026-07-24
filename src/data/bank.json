@@ -1,0 +1,839 @@
+{
+  "_comment": "Central question bank for the 2026 hackathon. Each entry: id (stable), difficulty (easy|medium|hard), title, and text (array of lines, joined with newlines at load). Referenced by id from the per-student assignments table and embedded as a header in downloaded submission files. Edit here + redeploy to change questions.",
+  "questions": [
+    {
+      "id": "e01",
+      "difficulty": "easy",
+      "title": "Largest of Three Numbers",
+      "text": [
+        "Write a program that asks the user to enter three numbers and displays the largest among them.",
+        "",
+        "Input Prompts:",
+        "Enter the first number:",
+        "Enter the second number:",
+        "Enter the third number:",
+        "",
+        "Output:",
+        "Largest number: <largest number>"
+      ]
+    },
+    {
+      "id": "e02",
+      "difficulty": "easy",
+      "title": "Greeting Program",
+      "text": [
+        "Write a program that asks the user to enter their first name, last name, and age. Display a personalized greeting along with a message stating how old they are.",
+        "",
+        "Input Prompts:",
+        "Enter your first name:",
+        "Enter your last name:",
+        "Enter your age:",
+        "",
+        "Output:",
+        "Hello, <first name> <last name>!",
+        "You are <age> years old.",
+        "Welcome to the Hackathon!"
+      ]
+    },
+    {
+      "id": "e03",
+      "difficulty": "easy",
+      "title": "Smallest of Three Numbers",
+      "text": [
+        "Write a program that asks the user to enter three numbers and displays the smallest among them.",
+        "",
+        "Ask the user to:",
+        "Enter the first number:",
+        "Enter the second number:",
+        "Enter the third number:",
+        "",
+        "Display the output in the following format:",
+        "Smallest number: <smallest_number>"
+      ]
+    },
+    {
+      "id": "e04",
+      "difficulty": "easy",
+      "title": "Leap Year Checker",
+      "text": [
+        "Write a program that asks the user to enter a year and determines whether it is a leap year or not.",
+        "",
+        "A year is considered a leap year if:",
+        "- It is divisible by 4.",
+        "- However, if it is divisible by 100, it must also be divisible by 400.",
+        "",
+        "Ask the user to:",
+        "Enter a year:",
+        "",
+        "Display the output in one of the following formats:",
+        "<year> is a leap year.",
+        "<year> is not a leap year."
+      ]
+    },
+    {
+      "id": "e05",
+      "difficulty": "easy",
+      "title": "Prime Number Checker",
+      "text": [
+        "Write a program that asks the user to enter a positive integer and determines whether it is a prime number.",
+        "",
+        "A prime number is a number greater than 1 that has exactly two factors: 1 and itself.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display one of the following:",
+        "<number> is a prime number.",
+        "OR",
+        "<number> is not a prime number."
+      ]
+    },
+    {
+      "id": "e06",
+      "difficulty": "easy",
+      "title": "Prime Number Calculator",
+      "text": [
+        "The Math Club is creating a tool to help students identify prime numbers. Write a program that asks the user to enter a positive integer N and displays all prime numbers from 2 to N (inclusive).",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display all prime numbers up to N, separated by spaces.",
+        "",
+        "Example:",
+        "Enter a positive integer: 20",
+        "",
+        "Prime numbers up to 20:",
+        "2 3 5 7 11 13 17 19"
+      ]
+    },
+    {
+      "id": "e07",
+      "difficulty": "easy",
+      "title": "Factorial of a Number",
+      "text": [
+        "A robotics club is testing a program that calculates mathematical values for different tasks. Write a program that asks the user to enter a non-negative integer and calculates its factorial.",
+        "",
+        "Enter a non-negative integer:",
+        "",
+        "Display the result in the following format:",
+        "Factorial of <number> = <factorial>"
+      ]
+    },
+    {
+      "id": "e08",
+      "difficulty": "easy",
+      "title": "Generate a Random Number Within a Range",
+      "text": [
+        "A game developer is creating a lucky draw system for a school carnival. Write a program that asks the user to enter a minimum and maximum value, then generates and displays a random number within that range (inclusive).",
+        "",
+        "Enter the minimum value:",
+        "Enter the maximum value:",
+        "",
+        "Display the result in the following format:",
+        "Random number generated: <random_number>"
+      ]
+    },
+    {
+      "id": "e09",
+      "difficulty": "easy",
+      "title": "Multiplication Table",
+      "text": [
+        "A teacher wants to generate multiplication tables for students. Write a program that asks the user to enter a positive integer and displays its multiplication table from 1 to 10.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Example:",
+        "Enter a positive integer: 7",
+        "7 x 1 = 7",
+        "7 x 2 = 14",
+        "7 x 3 = 21",
+        "...",
+        "7 x 10 = 70"
+      ]
+    },
+    {
+      "id": "e10",
+      "difficulty": "easy",
+      "title": "Find the Largest Element in an Array",
+      "text": [
+        "A wildlife researcher has collected the heights of several trees. Store the following values in an array:",
+        "",
+        "[12, 45, 7, 89, 34, 56, 23]",
+        "",
+        "Write a program to find and display the largest element in the array.",
+        "",
+        "Display the result in the following format:",
+        "Largest element: <largest_element>"
+      ]
+    },
+    {
+      "id": "e11",
+      "difficulty": "easy",
+      "title": "Find the Smallest Element in an Array",
+      "text": [
+        "A weather station has recorded the temperatures of a city over the past week. Store the following values in an array:",
+        "",
+        "[28, 34, 19, 25, 31, 22, 27]",
+        "",
+        "Write a program to find and display the smallest element in the array.",
+        "",
+        "Display the result in the following format:",
+        "Smallest element: <smallest_element>"
+      ]
+    },
+    {
+      "id": "e12",
+      "difficulty": "easy",
+      "title": "Simple Calculator",
+      "text": [
+        "You're building the calculator for a futuristic robot that can only perform one operation at a time. Write a program that asks the user for two numbers and an operator (+, -, *, or /), then displays the result.",
+        "",
+        "Enter the first number:",
+        "Enter the operator (+, -, *, /):",
+        "Enter the second number:",
+        "",
+        "Display the result in the following format:",
+        "Result: <answer>",
+        "",
+        "If an invalid operator is entered, display:",
+        "Invalid operator!"
+      ]
+    },
+    {
+      "id": "e13",
+      "difficulty": "easy",
+      "title": "Even or Odd",
+      "text": [
+        "A security system uses even and odd numbers to unlock different doors. Write a program that asks the user to enter an integer and determines whether it is even or odd.",
+        "",
+        "Enter an integer:",
+        "",
+        "Display one of the following:",
+        "<number> is Even.",
+        "OR",
+        "<number> is Odd."
+      ]
+    },
+    {
+      "id": "e14",
+      "difficulty": "easy",
+      "title": "Overall Percentage Calculator",
+      "text": [
+        "The principal of Greenwood High School wants to digitize the process of preparing report cards. Instead of calculating percentages manually for every student, you have been asked to develop a simple program that can do it automatically.",
+        "",
+        "Write a program that asks the user to enter the marks obtained (out of 100) in five subjects. The program should calculate the total marks, percentage, and display the results.",
+        "",
+        "Enter the marks for Subject 1:",
+        "Enter the marks for Subject 2:",
+        "Enter the marks for Subject 3:",
+        "Enter the marks for Subject 4:",
+        "Enter the marks for Subject 5:",
+        "",
+        "Display the result in the following format:",
+        "Total Marks: <total>/500",
+        "Percentage: <percentage>%"
+      ]
+    },
+    {
+      "id": "e15",
+      "difficulty": "easy",
+      "title": "Print Even Numbers from 1 to N",
+      "text": [
+        "A stadium is assigning even-numbered seats for a special event. To help the staff prepare the seating plan, write a program that asks the user to enter a positive integer N and displays all even numbers from 1 to N (inclusive).",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display all even numbers from 1 to N, separated by spaces.",
+        "",
+        "Example:",
+        "Enter a positive integer: 12",
+        "",
+        "Even numbers:",
+        "2 4 6 8 10 12"
+      ]
+    },
+    {
+      "id": "e16",
+      "difficulty": "easy",
+      "title": "Print Odd Numbers from 1 to N",
+      "text": [
+        "A city is organizing a marathon where runners with odd-numbered bibs will start first. To help the organizers prepare the starting list, write a program that asks the user to enter a positive integer N and displays all odd numbers from 1 to N (inclusive).",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display all odd numbers from 1 to N, separated by spaces.",
+        "",
+        "Example:",
+        "Enter a positive integer: 15",
+        "Odd numbers:",
+        "1 3 5 7 9 11 13 15"
+      ]
+    },
+    {
+      "id": "e17",
+      "difficulty": "easy",
+      "title": "Find the Sum of All Even Numbers up to N",
+      "text": [
+        "While solving a math puzzle, you realize you need the sum of all even numbers from 1 up to a given number. Write a program that asks the user to enter a positive integer N and displays the required sum.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display the result in the following format:",
+        "Sum of all even numbers: <sum>"
+      ]
+    },
+    {
+      "id": "e18",
+      "difficulty": "easy",
+      "title": "Find the Sum of All Odd Numbers up to N",
+      "text": [
+        "While solving a math puzzle, you realize you need the sum of all odd numbers from 1 up to a given number. Write a program that asks the user to enter a positive integer N and displays the required sum.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display the result in the following format:",
+        "Sum of all odd numbers: <sum>"
+      ]
+    },
+    {
+      "id": "e19",
+      "difficulty": "easy",
+      "title": "Count Numbers Divisible by 5 in a Range",
+      "text": [
+        "A quality control engineer is checking product IDs. Only IDs that are divisible by 5 are selected for inspection. Write a program that asks the user to enter a starting number and an ending number, then counts how many numbers in that range (inclusive) are divisible by 5.",
+        "",
+        "Enter the starting number:",
+        "Enter the ending number:",
+        "",
+        "Display the result in the following format:",
+        "Count of numbers divisible by 5: <count>"
+      ]
+    },
+    {
+      "id": "m01",
+      "difficulty": "medium",
+      "title": "Armstrong Number Checker",
+      "text": [
+        "A museum is restoring an ancient lock that can only be opened using special \"Armstrong Numbers.\" Historians have discovered that before attempting to unlock the vault, each number must first be verified. Your task is to help the restoration team by automating the verification process.",
+        "",
+        "Write a program that asks the user to enter a positive integer and determines whether it is an Armstrong number.",
+        "",
+        "An Armstrong number is a number that is equal to the sum of its own digits, each raised to the power of the number of digits.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display one of the following:",
+        "<number> is an Armstrong number.",
+        "OR",
+        "<number> is not an Armstrong number."
+      ]
+    },
+    {
+      "id": "m02",
+      "difficulty": "medium",
+      "title": "Count Spaces in a String",
+      "text": [
+        "A publishing company is developing a tool to analyze manuscripts before they are printed. One of the statistics the editors need is the number of spaces in a piece of text, as it helps them estimate formatting and layout requirements.",
+        "",
+        "Write a program that asks the user to enter a string and counts the number of space characters in it.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Number of spaces: <count>"
+      ]
+    },
+    {
+      "id": "m03",
+      "difficulty": "medium",
+      "title": "Find the LCM of Two Numbers",
+      "text": [
+        "Two autonomous robots are programmed to return to their charging station at different intervals. To prevent collisions and optimize charging schedules, the control system needs to determine the first time both robots arrive together.",
+        "",
+        "Develop a program that asks the user to enter two positive integers and calculates their Least Common Multiple (LCM).",
+        "",
+        "Enter the first number:",
+        "Enter the second number:",
+        "",
+        "Display the result in the following format:",
+        "LCM of <number1> and <number2>: <lcm>"
+      ]
+    },
+    {
+      "id": "m04",
+      "difficulty": "medium",
+      "title": "Check if a Number is a Palindrome",
+      "text": [
+        "An archaeological team has discovered an ancient vault protected by a mysterious number lock. According to old records, the vault only opens if the entered code reads the same forwards and backwards. Before attempting to unlock it, the team needs a program to verify whether a code is valid.",
+        "",
+        "Develop a program that asks the user to enter a positive integer and determines whether it is a palindrome number.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display one of the following:",
+        "<number> is a palindrome.",
+        "OR",
+        "<number> is not a palindrome."
+      ]
+    },
+    {
+      "id": "m05",
+      "difficulty": "medium",
+      "title": "String Palindrome Checker",
+      "text": [
+        "A cybersecurity team is testing an experimental encryption system that uses special \"mirror phrases\" as authentication keys. A valid key must read exactly the same forwards and backwards. Before a key can be accepted, it must be verified automatically.",
+        "",
+        "Develop a program that asks the user to enter a string and determines whether it is a palindrome.",
+        "",
+        "Enter a string:",
+        "",
+        "Display one of the following:",
+        "\"<string>\" is a palindrome.",
+        "OR",
+        "\"<string>\" is not a palindrome."
+      ]
+    },
+    {
+      "id": "m06",
+      "difficulty": "medium",
+      "title": "Generate Fibonacci Series",
+      "text": [
+        "A team of scientists has discovered that the population of a rare species follows the Fibonacci sequence. To predict future population growth, they need a program that can generate the sequence for any given number of terms.",
+        "",
+        "Develop a program that asks the user to enter the number of terms to generate and displays the Fibonacci series.",
+        "",
+        "Enter the number of terms:",
+        "",
+        "Display the result in the following format:",
+        "Fibonacci Series:",
+        "0 1 1 2 3 5 8 ..."
+      ]
+    },
+    {
+      "id": "m07",
+      "difficulty": "medium",
+      "title": "Reverse a String",
+      "text": [
+        "A secret intelligence agency has intercepted an encrypted message that has been written in reverse to hide its contents. Before analysts can read the message, it must be restored to its original form.",
+        "",
+        "Develop a program that asks the user to enter a string and displays the reversed version of the string.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Reversed string: <reversed_string>"
+      ]
+    },
+    {
+      "id": "m08",
+      "difficulty": "medium",
+      "title": "Reverse a Number",
+      "text": [
+        "A bank is upgrading its ATM software and needs to test a feature that reverses transaction reference numbers for system verification. Your task is to build a utility that performs this operation automatically.",
+        "",
+        "Develop a program that asks the user to enter a positive integer and displays the number with its digits reversed.",
+        "",
+        "Enter a positive integer:",
+        "",
+        "Display the result in the following format:",
+        "Reversed number: <reversed_number>"
+      ]
+    },
+    {
+      "id": "m09",
+      "difficulty": "medium",
+      "title": "Age Calculator",
+      "text": [
+        "A travel agency is developing an online registration system for an international youth camp. Since eligibility depends on the participant's current age, the system must calculate each applicant's age accurately, taking their birth month into account.",
+        "",
+        "Develop a program that asks the user to enter their birth month, birth year, current month, and current year. Calculate and display the person's age in completed years.",
+        "",
+        "Enter your birth month (1-12):",
+        "Enter your birth year:",
+        "Enter the current month (1-12):",
+        "Enter the current year:",
+        "",
+        "Display the result in the following format:",
+        "Age: <age> years"
+      ]
+    },
+    {
+      "id": "m10",
+      "difficulty": "medium",
+      "title": "Currency Converter (Fixed Exchange Rates)",
+      "text": [
+        "An international travel agency is developing a simple currency conversion tool for its customers. Since the system is offline, live exchange rates are unavailable. Instead, the program must use the following fixed exchange rates to convert Indian Rupees (INR) into the selected currency.",
+        "",
+        "Use these exchange rates:",
+        "1. USD (US Dollar)     -> 1 INR = 0.012 USD",
+        "2. EUR (Euro)          -> 1 INR = 0.010 EUR",
+        "3. GBP (British Pound) -> 1 INR = 0.0087 GBP",
+        "4. JPY (Japanese Yen)  -> 1 INR = 1.72 JPY",
+        "5. AED (UAE Dirham)    -> 1 INR = 0.043 AED",
+        "",
+        "Develop a program that asks the user to enter an amount in INR and choose a currency (1-5). Convert the amount using the fixed exchange rate and display the converted value.",
+        "",
+        "Enter the amount in INR:",
+        "Choose a currency (1-5):",
+        "",
+        "Display the result in the following format:",
+        "Converted Amount: <amount> <currency>",
+        "",
+        "If the user enters an invalid choice, display:",
+        "Invalid currency selection."
+      ]
+    },
+    {
+      "id": "m11",
+      "difficulty": "medium",
+      "title": "Student Grade Calculator",
+      "text": [
+        "A university is developing an automated grading system to speed up the evaluation process after final exams. Instead of assigning grades manually, the system should determine a student's final grade based on their overall percentage.",
+        "",
+        "Develop a program that asks the user to enter the student's percentage and assigns a grade using the following criteria:",
+        "A : 90-100",
+        "B : 80-89",
+        "C : 70-79",
+        "D : 60-69",
+        "E : 50-59",
+        "F : Below 50",
+        "",
+        "Enter the student's percentage:",
+        "",
+        "Display the result in the following format:",
+        "Grade: <grade>",
+        "",
+        "If the entered percentage is less than 0 or greater than 100, display:",
+        "Invalid percentage."
+      ]
+    },
+    {
+      "id": "m12",
+      "difficulty": "medium",
+      "title": "Dice Roll Simulator",
+      "text": [
+        "A game studio is developing a new board game and needs to test its virtual dice before launch. Instead of rolling a physical die, players will use a digital one that produces a random number between 1 and 6. Your task is to build the dice simulator.",
+        "",
+        "Develop a program that simulates the roll of a standard six-sided die and displays the result.",
+        "",
+        "Display the result in the following format:",
+        "You rolled: <number>"
+      ]
+    },
+    {
+      "id": "m13",
+      "difficulty": "medium",
+      "title": "Toggle the Case of Every Letter",
+      "text": [
+        "A digital archive stores important document IDs using a mix of uppercase and lowercase letters. To test a new formatting tool, the archive team needs a program that can automatically swap the case of every letter while leaving numbers and special characters unchanged.",
+        "",
+        "Develop a program that asks the user to enter a string and toggles the case of every alphabetical character.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Toggled string: <result>"
+      ]
+    },
+    {
+      "id": "m14",
+      "difficulty": "medium",
+      "title": "Sort a List in Ascending Order (Without Using sort())",
+      "text": [
+        "A research laboratory receives sensor readings in a random order. Before the data can be analyzed, it must be arranged from the smallest value to the largest. Since the laboratory's software library is still under development, built-in sorting functions are unavailable.",
+        "",
+        "Develop a program that sorts the following list in ascending order without using any built-in sorting functions (such as sort() or sorted()).",
+        "",
+        "List:",
+        "[42, 17, 89, 5, 63, 28, 11]",
+        "",
+        "Display the result in the following format:",
+        "Sorted list: <sorted_list>"
+      ]
+    },
+    {
+      "id": "m15",
+      "difficulty": "medium",
+      "title": "Print Only the Vowels in a String",
+      "text": [
+        "A linguistics research team is analyzing spoken languages to study vowel usage in different words and sentences. To speed up their analysis, they need a program that extracts only the vowels from a given piece of text while ignoring all other characters.",
+        "",
+        "Develop a program that asks the user to enter a string and displays only the vowels in the order they appear.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Vowels: <vowels>"
+      ]
+    },
+    {
+      "id": "m16",
+      "difficulty": "medium",
+      "title": "Print Only the Consonants in a String",
+      "text": [
+        "A text analysis tool is being developed to study language patterns in books. One of its features extracts only the consonants from a sentence while ignoring vowels, spaces, digits, and special characters.",
+        "",
+        "Develop a program that asks the user to enter a string and displays only the consonants in the order they appear.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Consonants: <consonants>"
+      ]
+    },
+    {
+      "id": "m17",
+      "difficulty": "medium",
+      "title": "Check if a String Starts with a Given Letter",
+      "text": [
+        "A digital library organizes thousands of book titles every day. To speed up searches, the system first checks whether a title begins with a specific letter before displaying matching results.",
+        "",
+        "Develop a program that asks the user to enter a string and a letter. Determine whether the string starts with the given letter.",
+        "",
+        "Enter a string:",
+        "Enter a letter:",
+        "",
+        "Display one of the following:",
+        "The string starts with '<letter>'.",
+        "OR",
+        "The string does not start with '<letter>'."
+      ]
+    },
+    {
+      "id": "m18",
+      "difficulty": "medium",
+      "title": "Check if a String Ends with a Given Letter",
+      "text": [
+        "A file management system identifies documents based on the last character of their reference code. Before processing a file, the system must verify whether the code ends with a specific letter.",
+        "",
+        "Develop a program that asks the user to enter a string and a letter. Determine whether the string ends with the given letter.",
+        "",
+        "Enter a string:",
+        "Enter a letter:",
+        "",
+        "Display one of the following:",
+        "The string ends with '<letter>'.",
+        "OR",
+        "The string does not end with '<letter>'."
+      ]
+    },
+    {
+      "id": "m19",
+      "difficulty": "medium",
+      "title": "Find the Range (Max - Min) in an Array",
+      "text": [
+        "A wildlife research team has collected temperature readings from sensors placed across a forest. To understand how much the temperature varies, they need to calculate the range of the readings by finding the difference between the highest and lowest values.",
+        "",
+        "Develop a program that finds the maximum and minimum values in the following array and calculates the range (Maximum - Minimum).",
+        "",
+        "Array:",
+        "[34, 18, 52, 27, 45, 11, 39, 60]",
+        "",
+        "Display the result in the following format:",
+        "Maximum value: <max>",
+        "Minimum value: <min>",
+        "Range: <range>"
+      ]
+    },
+    {
+      "id": "h01",
+      "difficulty": "hard",
+      "title": "Find the Day of the Week (Zeller's Congruence)",
+      "text": [
+        "During a cybersecurity audit, a team of digital forensics experts recovered an encrypted archive containing thousands of historical records. Every record is indexed by the exact day of the week it was created, but the original calendar software is no longer available. Fortunately, the engineers discovered that the system relied on Zeller's Congruence, a mathematical algorithm that determines the day of the week for any given date. Your task is to recreate this functionality without using any built-in date or calendar libraries.",
+        "",
+        "Use the following month codes:",
+        "January = 0 (6 in leap years)",
+        "February = 3 (2 in leap years)",
+        "March = 3",
+        "April = 6",
+        "May = 1",
+        "June = 4",
+        "July = 6",
+        "August = 2",
+        "September = 5",
+        "October = 0",
+        "November = 3",
+        "December = 5",
+        "",
+        "Century codes:",
+        "1700s = 4",
+        "1800s = 2",
+        "1900s = 0",
+        "2000s = 6",
+        "2100s = 4",
+        "",
+        "Algorithm:",
+        "1. Take the last two digits of the year.",
+        "2. Add the last two digits of the year divided by 4 (ignore the remainder).",
+        "3. Add the day of the month.",
+        "4. Add the month code.",
+        "5. Add the century code.",
+        "6. If it is a leap year and the month is January or February, subtract 1.",
+        "7. Divide the total by 7 and take the remainder.",
+        "",
+        "Remainders:",
+        "0 = Sunday",
+        "1 = Monday",
+        "2 = Tuesday",
+        "3 = Wednesday",
+        "4 = Thursday",
+        "5 = Friday",
+        "6 = Saturday",
+        "",
+        "Develop a program that asks the user to enter a day, month, and year, then determines the correct day of the week using Zeller's Congruence.",
+        "",
+        "Enter the day:",
+        "Enter the month:",
+        "Enter the year:",
+        "",
+        "Display the result in the following format:",
+        "Day of the week: <day>"
+      ]
+    },
+    {
+      "id": "h02",
+      "difficulty": "hard",
+      "title": "Rock, Paper, Scissors - Best of Three",
+      "text": [
+        "A game development studio is building an AI-powered arcade machine for an upcoming gaming expo. Before the game is released, the developers need to test whether the game logic correctly handles multiple rounds, keeps score, and declares the overall winner. The AI opponent should make its choice randomly each round, just like a real player.",
+        "",
+        "Develop a program that allows the user to play a Best of Three game of Rock, Paper, Scissors against the computer. The computer's choice must be selected randomly each round. After every round, display both choices, the round winner, and the current score. The game ends as soon as either the player or the computer wins two rounds.",
+        "",
+        "The available choices are:",
+        "1. Rock",
+        "2. Paper",
+        "3. Scissors",
+        "",
+        "Display the result in the following format:",
+        "Round 1:",
+        "You: Rock",
+        "Bot: Scissors",
+        "Winner: You",
+        "",
+        "Score:",
+        "You: 1",
+        "Bot: 0",
+        "",
+        "...",
+        "",
+        "Final Result:",
+        "You win the Best of Three!",
+        "OR",
+        "Bot wins the Best of Three!",
+        "",
+        "Hint: Use your language's built-in random number function/library to generate a random choice."
+      ]
+    },
+    {
+      "id": "h03",
+      "difficulty": "hard",
+      "title": "Character Frequency Counter",
+      "text": [
+        "A digital forensics team has recovered a damaged communication log from a cyberattack. Before the message can be analyzed, investigators need to know how frequently each character appears. This information will help identify repeated patterns, detect possible encryption methods, and reconstruct missing parts of the message.",
+        "",
+        "Develop a program that asks the user to enter a string and displays the frequency of every character present in the input. Uppercase and lowercase letters should be treated as different characters, and spaces should also be counted.",
+        "",
+        "Enter a string:",
+        "",
+        "Display the result in the following format:",
+        "Character Frequencies:",
+        "H: 1",
+        "e: 2",
+        "l: 2",
+        "o: 1",
+        "' ': 1"
+      ]
+    },
+    {
+      "id": "h04",
+      "difficulty": "hard",
+      "title": "Sort Students by Marks",
+      "text": [
+        "A national scholarship committee has received the marks of students from schools across the country. Before selecting the top performers, the committee's software must arrange the records in descending order of marks. Since the final ranking system is still under development, built-in sorting functions cannot be used.",
+        "",
+        "Develop a program that sorts the following student records in descending order of marks without using any built-in sorting functions (such as sort() or sorted()). If two students have the same marks, preserve their original order.",
+        "",
+        "Student Records:",
+        "Aarav : 92",
+        "Meera : 78",
+        "Vihaan : 85",
+        "Ananya : 96",
+        "Kabir : 85",
+        "Diya : 90",
+        "Rohan : 73",
+        "Ishita : 99",
+        "Arjun : 81",
+        "Sneha : 94",
+        "Yash : 88",
+        "Priya : 91",
+        "Karan : 76",
+        "Neha : 83",
+        "Aditya : 97",
+        "",
+        "Display the result in the following format:",
+        "Students sorted by marks:",
+        "Ishita : 99",
+        "Aditya : 97",
+        "Ananya : 96",
+        "Sneha : 94",
+        "Aarav : 92",
+        "Priya : 91",
+        "Diya : 90",
+        "Yash : 88",
+        "Vihaan : 85",
+        "Kabir : 85",
+        "Neha : 83",
+        "Arjun : 81",
+        "Meera : 78",
+        "Karan : 76",
+        "Rohan : 73"
+      ]
+    },
+    {
+      "id": "h05",
+      "difficulty": "hard",
+      "title": "Caesar Cipher Encryption",
+      "text": [
+        "A cybersecurity company is developing a secure messaging platform for internal communication. As part of a training exercise, new developers are asked to implement the Caesar Cipher, one of the earliest and most well-known encryption techniques. In this cipher, each alphabetical character is shifted forward in the alphabet by a fixed number of positions, making the original message unreadable without the correct shift value.",
+        "",
+        "Develop a program that asks the user to enter a message and a shift value (1-25). Encrypt the message using the Caesar Cipher by shifting only alphabetical characters while preserving their case. Spaces, digits, and special characters should remain unchanged. Do not use the inbuilt module for it.",
+        "",
+        "Enter the message:",
+        "Enter the shift value (1-25):",
+        "",
+        "Display the result in the following format:",
+        "Encrypted message: <encrypted_message>"
+      ]
+    },
+    {
+      "id": "h06",
+      "difficulty": "hard",
+      "title": "Hangman Game",
+      "text": [
+        "A renowned museum has discovered an ancient vault containing priceless artifacts, but the vault is protected by a digital security system. To unlock it, archaeologists must correctly guess a hidden password one letter at a time. Every incorrect guess increases the risk of permanently locking the vault, leaving only a limited number of attempts before access is denied.",
+        "",
+        "Develop a Hangman game using the following character array, where each element represents one letter of the hidden word:",
+        "['P', 'Y', 'T', 'H', 'O', 'N']",
+        "",
+        "Initially, display an underscore (_) for each hidden letter. The user should guess one character at a time. If the guessed character exists in the word, reveal all its occurrences. Otherwise, decrease the remaining attempts by one. The game ends when the user successfully guesses the entire word or runs out of attempts.",
+        "",
+        "Rules:",
+        "- Maximum incorrect attempts: 6",
+        "- Ignore case while comparing characters.",
+        "- Repeated guesses should not reduce the remaining attempts.",
+        "",
+        "Display the result in the following format:",
+        "Word: _ _ _ _ _ _",
+        "Remaining attempts: 6",
+        "",
+        "Enter your guess:",
+        "",
+        "...",
+        "",
+        "Congratulations! You guessed the word.",
+        "OR",
+        "Game Over! The correct word was: PYTHON"
+      ]
+    }
+  ]
+}
