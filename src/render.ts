@@ -462,13 +462,9 @@ export function renderQuestion(o: QuestionOpts): string {
             <textarea id="codeArea" name="code" style="display:none;">${esc(o.draftCode)}</textarea>
         </div>
         <div id="runPanel">
-            ${
-              o.language !== "python"
-                ? `<div class="run-info">&#9432; <b>Batch run:</b> ${esc(cap(o.language))} programs run all at once &mdash; type <b>every</b> input your program will read into the Input box below, <b>one value per line</b>, <b>before</b> clicking Run. (Live typing during the run isn't available for ${esc(cap(o.language))}.)</div>`
-                : ""
-            }
-            <button type="button" id="stdinToggle" class="run-sub" aria-expanded="false">&#9656; Input (stdin)</button>
-            <textarea id="stdinArea" class="run-stdin" placeholder="Standard input passed to your program (optional)" spellcheck="false" style="display:none;"></textarea>
+            <div class="run-info">&#9432; <b>Batch run:</b> your program runs all at once &mdash; type <b>every</b> input it will read into the Input box below, <b>one value per line</b>, <b>before</b> clicking Run. (Live typing during the run isn't available.)</div>
+            <button type="button" id="stdinToggle" class="run-sub" aria-expanded="true">&#9662; Input (stdin)</button>
+            <textarea id="stdinArea" class="run-stdin" placeholder="One input value per line (leave empty if your program reads no input)" spellcheck="false"></textarea>
             <div class="run-bar">
                 <button type="button" id="runBtn" class="run-button">&#9654; Run Code</button>
                 <span id="runStatus" class="run-status"></span>
