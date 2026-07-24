@@ -185,6 +185,16 @@ body::before {
     transform: translateY(-1px);
 }
 
+/* FIA is the host school -- show its logo larger than the other sponsors. */
+.sponsor-logo-fia {
+    height: 60px;
+    max-width: 220px;
+}
+
+@media (max-width: 600px) {
+    .sponsor-logo-fia { height: 46px; }
+}
+
 /* Main Dark Card Container (.glass retained for JS / structural compatibility) */
 .glass {
     position: relative;

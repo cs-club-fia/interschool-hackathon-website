@@ -276,7 +276,7 @@ export function layout(opts: LayoutOpts): string {
     <footer class="app-footer">
       <div class="footer-sponsor-title">Sponsored by</div>
       <div class="footer-sponsors">
-        <img src="/img/FIA.png" alt="Fravashi International Academy" class="sponsor-logo">
+        <img src="/img/FIA.png" alt="Fravashi International Academy" class="sponsor-logo sponsor-logo-fia">
         <img src="/img/winjit.png" alt="Winjit" class="sponsor-logo">
       </div>
     </footer>
