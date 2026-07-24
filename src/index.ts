@@ -208,9 +208,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!(await db.canAccess(env, s.u, qname))) return redirect("/review");
     await db.startTimer(env, s.u, qname);
     const lang = await langFor(env, s.u);
+    const qnum = (await db.getAssignment(env, s.u)).findIndex((a) => a.questionId === qname) + 1;
     return html(
       renderQuestion({
         qname,
+        qnum,
         timeLeft: await db.getTimeLeft(env, s.u, qname),
         questionText: q.text,
         expectedExt: extensionForLanguage(lang),
@@ -259,6 +261,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       return html(
         renderQuestion({
           qname,
+          qnum: assignmentIds.indexOf(qname) + 1,
           timeLeft: await db.getTimeLeft(env, s.u, qname),
           questionText: q.text,
           expectedExt: extensionForLanguage(lang),

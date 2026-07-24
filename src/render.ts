@@ -429,6 +429,7 @@ export function renderDashboard(o: DashboardOpts): string {
 
 interface QuestionOpts {
   qname: string;
+  qnum: number; // 1-based slot position, shown to students instead of the bank id
   timeLeft: number;
   questionText: string;
   expectedExt: string;
@@ -443,7 +444,7 @@ export function renderQuestion(o: QuestionOpts): string {
 <link rel="stylesheet" href="/static/editor-theme.css">
 <div class="glass" style="max-width: 800px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
-        <div style="font-size:1.5rem; font-weight:700; color:var(--text);">${esc(cap(o.qname))}</div>
+        <div style="font-size:1.5rem; font-weight:700; color:var(--text);">Question ${o.qnum}</div>
         <div style="display:flex; align-items:center; gap:0.5rem;">
             <span style="font-size:0.875rem; color:var(--text-muted); font-weight:500;">Time left:</span>
             <span class="timer-badge" id="timer">${esc(o.timeLeft)}</span>
@@ -710,7 +711,7 @@ export function renderQuestion(o: QuestionOpts): string {
     document.addEventListener('webkitfullscreenchange', onChange);
 })();
 </script>`;
-  return layout({ title: cap(o.qname), csrfToken: o.csrfToken, body, leaveTracking: true, bg: "calm", activeRedirect: true, currentQname: o.qname });
+  return layout({ title: `Question ${o.qnum}`, csrfToken: o.csrfToken, body, leaveTracking: true, bg: "calm", activeRedirect: true, currentQname: o.qname });
 }
 
 interface ReviewOpts {
