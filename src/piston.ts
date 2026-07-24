@@ -20,7 +20,10 @@ const LANG: Record<string, { piston: string; file: string }> = {
 };
 
 const EXEC_TIMEOUT_MS = 15000; // hard ceiling on the whole outbound request
-const RUN_TIMEOUT_MS = 5000; // Piston-side wall-clock limit for the program
+// Piston caps these at its configured maxima (stock defaults: run 3000ms,
+// compile 10000ms) and REJECTS a request that exceeds them -- so stay within the
+// defaults for out-of-the-box compatibility with any Piston instance.
+const RUN_TIMEOUT_MS = 3000; // Piston-side wall-clock limit for the program
 const COMPILE_TIMEOUT_MS = 10000; // Piston-side limit for compiled languages
 const MAX_STDIN_BYTES = 64 * 1024; // plenty for competitive-style input
 const MAX_OUTPUT_CHARS = 100 * 1000; // cap what we hand back to the browser
@@ -47,13 +50,15 @@ export interface RunResult {
 let runtimeCache: { at: number; map: Record<string, string> } | null = null;
 const RUNTIME_TTL_MS = 5 * 60 * 1000;
 
-// Normalize whatever the operator configured into the Piston API base that ends
-// at ".../api/v2/piston" (no trailing slash), so we can append /execute and
-// /runtimes. Accepts a bare host or a full API base.
+// Normalize whatever the operator configured into the Piston API base (no
+// trailing slash) so we can append /execute and /runtimes. A **self-hosted**
+// Piston container serves at `/api/v2` (this is the normal case); the old public
+// emkc.org gateway used `/api/v2/piston`. Accepts a bare host (append /api/v2) or
+// a URL already pointing at either base.
 function apiBase(raw: string): string {
-  let u = raw.trim().replace(/\/+$/, "");
-  if (!/\/api\/v2\/piston$/.test(u)) u = u + "/api/v2/piston";
-  return u;
+  const u = raw.trim().replace(/\/+$/, "");
+  if (/\/api\/v2(\/piston)?$/.test(u)) return u; // already an API base
+  return u + "/api/v2"; // bare host -> self-hosted container base
 }
 
 // Java requires the file name to match the public class. Derive it from the

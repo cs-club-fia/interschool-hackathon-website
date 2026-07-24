@@ -20,28 +20,38 @@ Any always-on machine with Docker (a small VPS is fine). Piston needs
 ## 2. Run Piston
 
 ```bash
-docker run -d --name piston --restart always --privileged \
-  -p 2000:2000 ghcr.io/engineer-man/piston
+docker run -d --name piston --restart unless-stopped --privileged \
+  -p 2000:2000 -v piston_data:/piston ghcr.io/engineer-man/piston
 ```
 
-The API base is now `http://<host>:2000/api/v2/piston`.
+(The named `piston_data` volume keeps installed languages across restarts.)
+
+A **self-hosted** container serves its API at `http://<host>:2000/api/v2/...`
+(note: **no `/piston` segment** — that was only the old public emkc gateway).
+You'll set `PISTON_URL` to the bare host; the Worker appends `/api/v2`.
 
 ## 3. Install the three runtimes
 
-Piston ships with **no** languages installed. Install Python, C++ (gcc), and Java:
+Piston ships with **no** languages installed. Install via the packages API
+(list versions first, then POST each):
 
 ```bash
-docker exec piston /piston/packages/.build/ppman install python
-docker exec piston /piston/packages/.build/ppman install gcc     # provides C++
-docker exec piston /piston/packages/.build/ppman install java
+# see available versions
+curl http://<host>:2000/api/v2/packages
+
+# install Python, C++ (from gcc), and Java (use versions from the list above)
+curl -X POST http://<host>:2000/api/v2/packages -H 'Content-Type: application/json' -d '{"language":"python","version":"3.12.0"}'
+curl -X POST http://<host>:2000/api/v2/packages -H 'Content-Type: application/json' -d '{"language":"gcc","version":"10.2.0"}'
+curl -X POST http://<host>:2000/api/v2/packages -H 'Content-Type: application/json' -d '{"language":"java","version":"15.0.2"}'
 ```
 
-- To see what's available first: `curl http://<host>:2000/api/v2/packages`
-- Verify they're active: `curl http://<host>:2000/api/v2/runtimes`
-  — you should see entries for `python`, `c++`, and `java`.
+- The gcc/java builds can take several minutes — the HTTP call may time out on
+  your end while the server keeps building; just re-check `/runtimes`.
+- Verify they're active: `curl http://<host>:2000/api/v2/runtimes` — you should
+  see `python`, `java`, and **`c++`** (the gcc package provides `c`/`c++`).
 
 > The student's language is fixed server-side from their login choice, so only
-> these three matter. The Worker picks the highest installed version of each.
+> these three matter. The Worker auto-resolves the highest installed version.
 
 ## 4. Expose it over HTTPS
 
@@ -64,8 +74,9 @@ cloudflared tunnel --url http://localhost:2000
 
 ## 5. Point the Worker at it
 
-The value can be either the host (`https://piston.yourdomain.com`) or the full
-API base (`https://piston.yourdomain.com/api/v2/piston`) — both are handled.
+The value can be the bare host (`https://piston.yourdomain.com`) or a full API
+base (`.../api/v2`, or `.../api/v2/piston` for the old public gateway) — all are
+handled.
 
 **Production** (secret keeps the host private):
 
