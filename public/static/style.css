@@ -483,6 +483,18 @@ button:focus-visible {
     margin-top: 1rem;
 }
 
+/* Info box above the stdin window (C++/Java batch-run instructions). */
+.run-info {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #93C5FD;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
 /* stdin disclosure toggle: a quiet text button, not a full-width block. */
 .run-sub {
     width: auto;
