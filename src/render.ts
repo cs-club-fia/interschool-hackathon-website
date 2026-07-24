@@ -3,7 +3,7 @@
 // leave/draft/paste-flag endpoints are identical to the originals, so the
 // vendored editor.js / timer.js / base leave-script work unchanged.
 
-import { EVENT_TIMEZONE } from "./data/questions";
+import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "./data/questions";
 
 const AMP = /&/g,
   LT = /</g,
@@ -287,7 +287,14 @@ export function layout(opts: LayoutOpts): string {
 </html>`;
 }
 
-export function renderLogin(error: string | null): string {
+export function renderLogin(error: string | null, selectedLanguage?: string): string {
+  const sel = selectedLanguage || DEFAULT_LANGUAGE;
+  const langOptions = Object.keys(LANGUAGE_LABELS)
+    .map(
+      (k) =>
+        `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(LANGUAGE_LABELS[k])}</option>`,
+    )
+    .join("");
   const body = `<div class="glass">
     <div class="header">FIA CS Club Hackathon Login</div>
     <form method="post">
@@ -295,9 +302,14 @@ export function renderLogin(error: string | null): string {
             <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Username</label>
             <input type="text" name="username" placeholder="Enter your username" required>
         </div>
-        <div style="margin-bottom: 1.25rem; text-align: left;">
+        <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Password</label>
             <input type="password" name="password" placeholder="Enter password" required>
+        </div>
+        <div style="margin-bottom: 1.25rem; text-align: left;">
+            <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Preferred language</label>
+            <select name="language">${langOptions}</select>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:-0.75rem;">You code in this language for the whole test. It locks once you start.</div>
         </div>
         <button type="submit">Log In</button>
     </form>
@@ -356,6 +368,7 @@ export function renderStartTest(username: string, csrfToken: string): string {
 interface DashboardOpts {
   username: string;
   school?: string;
+  grade?: string;
   language?: string;
   questions: string[];
   submitted: Record<string, boolean>;
@@ -389,12 +402,18 @@ export function renderDashboard(o: DashboardOpts): string {
     })
     .join("\n");
 
-  const meta =
-    o.school || o.language
-      ? `<div class="status" style="background:rgba(59, 130, 246, 0.15); border-color:rgba(59, 130, 246, 0.3); color:#93C5FD; font-weight:600;">
-           ${esc(o.school || "")}${o.school && o.language ? " &middot; " : ""}${esc(cap(o.language || ""))}
+  const metaParts = [
+    o.school || "",
+    o.grade ? "Grade " + o.grade : "",
+    o.language ? cap(o.language) : "",
+  ]
+    .filter(Boolean)
+    .map((p) => esc(p));
+  const meta = metaParts.length
+    ? `<div class="status" style="background:rgba(59, 130, 246, 0.15); border-color:rgba(59, 130, 246, 0.3); color:#93C5FD; font-weight:600;">
+           ${metaParts.join(" &middot; ")}
          </div>`
-      : "";
+    : "";
 
   const body = `<div class="glass">
     <div class="header">Welcome, ${esc(o.username)}</div>
@@ -735,7 +754,7 @@ interface AdminOpts {
   userCount: number;
   submissions: Record<string, Record<string, boolean>>;
   questions: string[];
-  studentInfo: Record<string, { school?: string; language?: string }>;
+  studentInfo: Record<string, { school?: string; grade?: string; language?: string }>;
   leaveCounts: Record<string, number>;
   pasteFlagCounts: Record<string, number>;
   activeUsers: number;
@@ -770,6 +789,7 @@ export function renderAdmin(o: AdminOpts): string {
       return `<tr>
             <td style="font-weight:600;">${esc(user)}</td>
             <td>${esc(info.school || "")}</td>
+            <td>${esc(info.grade || "")}</td>
             <td>${esc(cap(info.language || ""))}</td>
             <td>${esc(o.leaveCounts[user] ?? 0)}</td>
             <td>${esc(o.pasteFlagCounts[user] ?? 0)}</td>
@@ -805,6 +825,7 @@ export function renderAdmin(o: AdminOpts): string {
         <tr>
             <th data-sort="string">User</th>
             <th data-sort="string">School</th>
+            <th data-sort="string">Grade</th>
             <th data-sort="string">Language</th>
             <th data-sort="int">Leaves</th>
             <th data-sort="int">Paste Flags</th>

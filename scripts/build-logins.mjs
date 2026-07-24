@@ -7,7 +7,7 @@
 // logins.input.json is gitignored). See logins.input.example.json:
 // {
 //   "students": [
-//     { "username": "team-a", "password": "secret1", "school": "School A", "language": "python" }
+//     { "username": "team-a", "password": "secret1", "school": "School A", "grade": "10", "language": "python" }
 //   ],
 //   "admins": [
 //     { "username": "admin", "password": "secret2" }
@@ -116,8 +116,9 @@ for (const s of students) {
   if (!(await verifyPassword(hash, s.password))) {
     fail(`Generated hash for "${s.username}" failed self-verification. Aborting so no one gets locked out.`);
   }
-  out.students.push({ username: s.username, password_hash: hash, school: s.school || "", language });
-  report.push([s.username, s.school || "", language, "student"]);
+  const grade = String(s.grade || "");
+  out.students.push({ username: s.username, password_hash: hash, school: s.school || "", grade, language });
+  report.push([s.username, s.school || "", grade, language, "student"]);
 }
 
 for (const a of admins) {
@@ -127,7 +128,7 @@ for (const a of admins) {
     fail(`Generated hash for admin "${a.username}" failed self-verification. Aborting.`);
   }
   out.admins.push({ username: a.username, password_hash: hash });
-  report.push([a.username, "", "", "admin"]);
+  report.push([a.username, "", "", "", "admin"]);
 }
 
 writeFileSync(outputPath, JSON.stringify(out, null, 2) + "\n");
@@ -135,9 +136,9 @@ writeFileSync(outputPath, JSON.stringify(out, null, 2) + "\n");
 console.log(`\n✅ Wrote ${out.students.length} student(s) + ${out.admins.length} admin(s) to ${outputPath}`);
 console.log("   Every hash was re-verified against its password with the Worker's own algorithm.\n");
 const pad = (s, n) => String(s).padEnd(n);
-console.log(`   ${pad("username", 22)}${pad("school", 20)}${pad("language", 10)}role`);
-console.log(`   ${"-".repeat(22)}${"-".repeat(20)}${"-".repeat(10)}-----`);
-for (const [u, sch, lang, role] of report) {
-  console.log(`   ${pad(u, 22)}${pad(sch, 20)}${pad(lang, 10)}${role}`);
+console.log(`   ${pad("username", 22)}${pad("school", 20)}${pad("grade", 8)}${pad("language", 10)}role`);
+console.log(`   ${"-".repeat(22)}${"-".repeat(20)}${"-".repeat(8)}${"-".repeat(10)}-----`);
+for (const [u, sch, grd, lang, role] of report) {
+  console.log(`   ${pad(u, 22)}${pad(sch, 20)}${pad(grd, 8)}${pad(lang, 10)}${role}`);
 }
 console.log("\n   Next: npx wrangler deploy   (or git push if the Git build is connected)\n");

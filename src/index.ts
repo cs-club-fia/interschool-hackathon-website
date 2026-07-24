@@ -14,7 +14,7 @@ import {
   findAdmin,
   allStudents,
 } from "./auth";
-import { QUESTIONS, QUESTION_ORDER, extensionForLanguage } from "./data/questions";
+import { QUESTIONS, QUESTION_ORDER, extensionForLanguage, normalizeLanguage } from "./data/questions";
 import * as db from "./db";
 import { runCode } from "./piston";
 import {
@@ -52,10 +52,22 @@ function nextQuestion(qname: string): string | null {
   return QUESTION_ORDER[idx + 1];
 }
 
-function studentInfoMap(): Record<string, { school?: string; language?: string }> {
-  const map: Record<string, { school?: string; language?: string }> = {};
-  for (const s of allStudents()) map[s.username] = { school: s.school, language: s.language };
+function studentInfoMap(
+  langs: Record<string, string>,
+): Record<string, { school?: string; grade?: string; language?: string }> {
+  const map: Record<string, { school?: string; grade?: string; language?: string }> = {};
+  for (const s of allStudents()) {
+    // The live language is the login-screen choice (student_prefs); fall back to
+    // the bundled config value for a student who hasn't logged in yet.
+    map[s.username] = { school: s.school, grade: s.grade, language: langs[s.username] || s.language };
+  }
   return map;
+}
+
+// Effective language for one student: their login-screen choice, else the
+// bundled config default, else Python.
+async function langFor(env: Env, username: string): Promise<string> {
+  return normalizeLanguage(await db.getStudentLanguage(env, username), findStudent(username)?.language);
 }
 
 export default {
@@ -92,8 +104,16 @@ async function route(request: Request, env: Env): Promise<Response> {
     const form = await request.formData();
     const username = String(form.get("username") || "");
     const password = String(form.get("password") || "");
+    const chosenLang = String(form.get("language") || "");
     const student = findStudent(username);
     if (student && (await verifyPassword(student.password_hash, password))) {
+      // Persist the language chosen on the login screen. It is locked once the
+      // test has started (see db.setStudentLanguageOnLogin).
+      await db.setStudentLanguageOnLogin(
+        env,
+        username,
+        normalizeLanguage(chosenLang, student.language),
+      );
       const value = await createSessionValue(env, mkSession(username, false));
       return redirect("/dashboard", { "Set-Cookie": sessionCookieHeader(value) });
     }
@@ -102,7 +122,8 @@ async function route(request: Request, env: Env): Promise<Response> {
       const value = await createSessionValue(env, mkSession(username, true));
       return redirect("/admin", { "Set-Cookie": sessionCookieHeader(value) });
     }
-    return html(renderLogin("Invalid credentials"), 401);
+    // Preserve the student's language pick across a failed attempt.
+    return html(renderLogin("Invalid credentials", chosenLang || undefined), 401);
   }
 
   // --- Logout (student + admin share behaviour) ---
@@ -133,7 +154,8 @@ async function route(request: Request, env: Env): Promise<Response> {
       renderDashboard({
         username: s.u,
         school: student?.school,
-        language: student?.language,
+        grade: student?.grade,
+        language: await langFor(env, s.u),
         questions: QUESTION_ORDER,
         submitted,
         currentQuestion,
@@ -157,14 +179,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!qname || !QUESTIONS[qname]) return redirect("/dashboard");
     if (!(await db.canAccess(env, s.u, qname))) return redirect("/review");
     await db.startTimer(env, s.u, qname);
-    const student = findStudent(s.u);
+    const lang = await langFor(env, s.u);
     return html(
       renderQuestion({
         qname,
         timeLeft: await db.getTimeLeft(env, s.u, qname),
         questionText: QUESTIONS[qname].text,
-        expectedExt: extensionForLanguage(student?.language),
-        language: student?.language || "python",
+        expectedExt: extensionForLanguage(lang),
+        language: lang,
         draftCode: await db.getDraft(env, s.u, qname),
         csrfToken: await csrfTokenFor(env, s),
       }),
@@ -181,7 +203,6 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (!qname || !QUESTIONS[qname]) return redirect("/dashboard");
     const form = await request.formData();
     const autoSubmit = form.get("auto_submit") === "1";
-    const student = findStudent(s.u);
 
     // Server-authoritative integrity: never overwrite an already-submitted
     // question, and reject a manual submit once the timer has expired.
@@ -203,13 +224,14 @@ async function route(request: Request, env: Env): Promise<Response> {
     const code = String(form.get("code") || "");
     const big = tooLarge(code);
     if (big || !code.trim()) {
+      const lang = await langFor(env, s.u);
       return html(
         renderQuestion({
           qname,
           timeLeft: await db.getTimeLeft(env, s.u, qname),
           questionText: QUESTIONS[qname].text,
-          expectedExt: extensionForLanguage(student?.language),
-          language: student?.language || "python",
+          expectedExt: extensionForLanguage(lang),
+          language: lang,
           draftCode: clampCode(code),
           csrfToken: await csrfTokenFor(env, s),
           error: big ? "Submission too large (max ~1 MB)." : "No code submitted",
@@ -263,7 +285,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const stdin = String(form.get("stdin") || "");
     if (!code.trim()) return json({ error: "Write some code before running." }, 200);
     if (tooLarge(code)) return json({ error: "Code is too large to run (max ~1 MB)." }, 413);
-    const language = findStudent(s.u)?.language || "python";
+    const language = await langFor(env, s.u);
     const result = await runCode(env, { language, code, stdin });
     if (result.error) return json({ error: result.error }, 200);
     return json({
@@ -316,7 +338,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         userCount: await db.countActiveUsers(env),
         submissions,
         questions: QUESTION_ORDER,
-        studentInfo: studentInfoMap(),
+        studentInfo: studentInfoMap(await db.getStudentLanguages(env)),
         leaveCounts: await db.getLeaveCounts(env, students),
         pasteFlagCounts: await db.getPasteFlagCounts(env, students),
         activeUsers: await db.countActiveUsers(env),
@@ -372,7 +394,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const qname = decodeURIComponent(parts[4]);
     const code = await db.getSubmissionCode(env, username, qname);
     if (code == null) return new Response("File not found", { status: 404 });
-    const ext = extensionForLanguage(findStudent(username)?.language);
+    const ext = extensionForLanguage(await langFor(env, username));
     const filename = `${safeName(username)}_${safeName(qname)}.${ext}`;
     return new Response(code, {
       status: 200,
@@ -387,9 +409,10 @@ async function route(request: Request, env: Env): Promise<Response> {
     const guard = requireAdmin(session);
     if (guard) return guard;
     const all = await db.getAllSubmittedCode(env);
+    const langs = await db.getStudentLanguages(env);
     const files: Record<string, Uint8Array> = {};
     for (const row of all) {
-      const ext = extensionForLanguage(findStudent(row.username)?.language);
+      const ext = extensionForLanguage(langs[row.username] || findStudent(row.username)?.language);
       files[`${safeName(row.username)}/${safeName(row.question)}.${ext}`] = strToU8(row.code);
     }
     if (Object.keys(files).length === 0) {
