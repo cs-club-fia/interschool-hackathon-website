@@ -7,3 +7,6 @@ dist/
 
 # Plaintext login input for build-logins.mjs -- NEVER commit real passwords
 logins.input.json
+
+# Local secrets for the Piston tunnel scripts (auth tokens, worker URL)
+scripts/piston.local.json

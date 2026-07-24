@@ -9,6 +9,7 @@
 // endpoint can always return clean JSON to the browser.
 
 import type { Env } from "./types";
+import { getConfig } from "./db";
 
 // Our internal language keys (from logins.json / questions.ts) mapped to the
 // Piston language name plus the source filename to compile. Java's filename is
@@ -98,13 +99,17 @@ async function httpJson(url: string, init: RequestInit, timeoutMs: number): Prom
 // Resolve the version to request for a Piston language, caching the /runtimes
 // result. Returns "*" if the lookup fails -- recent Piston accepts a wildcard,
 // and if it doesn't, /execute will surface a clear error we pass through.
-async function resolveVersion(base: string, pistonLang: string): Promise<string> {
+async function resolveVersion(
+  base: string,
+  pistonLang: string,
+  authHeaders: Record<string, string>,
+): Promise<string> {
   const now = Date.now();
   if (runtimeCache && now - runtimeCache.at < RUNTIME_TTL_MS) {
     return runtimeCache.map[pistonLang] || "*";
   }
   try {
-    const res = await httpJson(base + "/runtimes", { method: "GET" }, EXEC_TIMEOUT_MS);
+    const res = await httpJson(base + "/runtimes", { method: "GET", headers: authHeaders }, EXEC_TIMEOUT_MS);
     const data = res.ok ? res.data : null;
     const map: Record<string, string> = {};
     if (Array.isArray(data)) {
@@ -162,14 +167,28 @@ interface PistonResponse {
 export async function runCode(env: Env, input: RunInput): Promise<RunResult> {
   const empty: RunResult = { stdout: "", stderr: "", output: "", exitCode: null, signal: null, time: "" };
 
-  if (!env.PISTON_URL) {
+  // The live URL normally lives in D1 (kept current by the laptop-side tunnel
+  // watcher); PISTON_URL is only a fallback for setups that don't use it.
+  let configuredUrl: string | null = null;
+  try {
+    configuredUrl = await getConfig(env, "piston_url");
+  } catch {
+    configuredUrl = null; // e.g. migration not yet applied -- fall back below
+  }
+  const pistonUrl = configuredUrl || env.PISTON_URL;
+  if (!pistonUrl) {
     return { ...empty, error: "Code runner is not configured." };
   }
   const lang = LANG[input.language] || LANG.python;
   const fileName = input.language === "java" ? javaFileName(input.code) : lang.file;
-  const base = apiBase(env.PISTON_URL);
+  const base = apiBase(pistonUrl);
+  // Sent to the local auth-proxy in front of Piston (scripts/piston-proxy.mjs);
+  // harmless to include even against a bare Piston container with no such proxy.
+  const authHeaders: Record<string, string> = env.PISTON_AUTH_TOKEN
+    ? { "X-Piston-Key": env.PISTON_AUTH_TOKEN }
+    : {};
 
-  const version = await resolveVersion(base, lang.piston);
+  const version = await resolveVersion(base, lang.piston, authHeaders);
 
   const payload = {
     language: lang.piston,
@@ -186,7 +205,7 @@ export async function runCode(env: Env, input: RunInput): Promise<RunResult> {
       base + "/execute",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(payload),
       },
       EXEC_TIMEOUT_MS,

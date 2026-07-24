@@ -1,0 +1,7 @@
+{
+  "workerUrl": "https://interschool-hackathon-fia.csclub.workers.dev",
+  "adminToken": "REPLACE_ME_generate_a_random_secret",
+  "authToken": "REPLACE_ME_generate_a_different_random_secret",
+  "proxyPort": 2001,
+  "pistonPort": 2000
+}
