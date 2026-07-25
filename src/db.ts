@@ -346,22 +346,6 @@ export async function getAllSubmittedCode(
   return results;
 }
 
-// --- Runtime config (currently just the self-updating Piston URL) ---
-export async function getConfig(env: Env, key: string): Promise<string | null> {
-  const row = await env.DB.prepare("SELECT value FROM config WHERE key = ?")
-    .bind(key)
-    .first<{ value: string }>();
-  return row ? row.value : null;
-}
-
-export async function setConfig(env: Env, key: string, value: string): Promise<void> {
-  await env.DB.prepare(
-    "INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-  )
-    .bind(key, value)
-    .run();
-}
-
 export async function countActiveUsers(env: Env): Promise<number> {
   const row = await env.DB.prepare(
     "SELECT COUNT(DISTINCT username) AS n FROM submissions WHERE start_time IS NOT NULL",

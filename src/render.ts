@@ -249,7 +249,7 @@ export function layout(opts: LayoutOpts): string {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=1.2.0">
     <script src="/static/timer.js"></script>
 </head>
 <body>
@@ -440,8 +440,8 @@ interface QuestionOpts {
 }
 
 export function renderQuestion(o: QuestionOpts): string {
-  const body = `<link rel="stylesheet" href="/static/codemirror/lib/codemirror.css">
-<link rel="stylesheet" href="/static/editor-theme.css">
+  const body = `<link rel="stylesheet" href="/static/codemirror/lib/codemirror.css?v=1.2.0">
+<link rel="stylesheet" href="/static/editor-theme.css?v=1.2.0">
 <div class="glass" style="max-width: 800px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
         <div style="font-size:1.5rem; font-weight:700; color:var(--text);">Question ${o.qnum}</div>
@@ -459,18 +459,21 @@ export function renderQuestion(o: QuestionOpts): string {
     <form id="submitForm" method="post" data-ext="${esc(o.expectedExt)}">
         <input type="hidden" name="csrf_token" value="${esc(o.csrfToken)}">
         <div id="editorContainer">
-            <textarea id="codeArea" name="code" style="display:none;">${esc(o.draftCode)}</textarea>
+            <textarea id="codeArea" name="code">${esc(o.draftCode)}</textarea>
         </div>
         <div id="runPanel">
-            <div class="run-info">&#9432; <b>Batch run:</b> your program runs all at once &mdash; type <b>every</b> input it will read into the Input box below, <b>one value per line</b>, <b>before</b> clicking Run. (Live typing during the run isn't available.)</div>
-            <button type="button" id="stdinToggle" class="run-sub" aria-expanded="true">&#9662; Input (stdin)</button>
-            <textarea id="stdinArea" class="run-stdin" placeholder="One input value per line (leave empty if your program reads no input)" spellcheck="false"></textarea>
-            <div class="run-bar">
-                <button type="button" id="runBtn" class="run-button">&#9654; Run Code</button>
+            <div class="run-bar" style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <button type="button" id="runBtn" class="run-button">&#9654; Run Code</button>
+                    <button type="button" id="stopBtn" class="btn-stop" disabled>&#9632; Stop</button>
+                    <button type="button" id="clearConsoleBtn" class="btn-clear">&#128465; Clear</button>
+                </div>
                 <span id="runStatus" class="run-status"></span>
             </div>
-            <div class="run-out-label">Output</div>
-            <pre id="runOutput" class="run-output" aria-live="polite" tabindex="0"></pre>
+            <div class="run-out-label">Console Terminal</div>
+            <div id="terminalConsole" class="terminal-console" style="text-align: left !important; display: block;" tabindex="0" aria-live="polite">
+                <span id="termOutput" style="text-align: left !important; white-space: pre-wrap;"></span><span id="termInputLine" class="term-input-line" style="text-align: left !important; display: inline; outline: none; border: none; caret-color: #38BDF8;" contenteditable="true" spellcheck="false"></span>
+            </div>
         </div>
         <button type="button" id="submitBtn" style="background:#10B981; border-color:#059669; color:#fff; margin-top:1rem; font-size:1rem; padding:0.75rem 1.5rem;">Submit Answer</button>
     </form>
@@ -511,7 +514,7 @@ export function renderQuestion(o: QuestionOpts): string {
 <script src="/static/codemirror/addon/edit/matchbrackets.js"></script>
 <script src="/static/editor.js"></script>
 <script>
-    window.onload = function() {
+    function initQuestionPage() {
         var duration = ${Number(o.timeLeft)};
         var display = document.getElementById('timer');
         var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
@@ -585,78 +588,178 @@ export function renderQuestion(o: QuestionOpts): string {
             document.getElementById('submitForm').submit();
         };
 
-        // --- Interpreter / Run panel ---
-        // Runs the current editor code (+ optional stdin) via the Worker, which
-        // proxies to the self-hosted Piston runner, and shows stdout/stderr. This
-        // is an in-page fetch (no focus change), so it never trips the anti-cheat
-        // blur/tab auto-submit above. Output is written with textContent, so
-        // program output can never inject HTML.
+        // --- Interactive IDE Console & Code Execution ---
         var runBtn = document.getElementById('runBtn');
+        var stopBtn = document.getElementById('stopBtn');
+        var clearConsoleBtn = document.getElementById('clearConsoleBtn');
         var runStatus = document.getElementById('runStatus');
-        var runOutput = document.getElementById('runOutput');
-        var stdinToggle = document.getElementById('stdinToggle');
-        var stdinArea = document.getElementById('stdinArea');
-        var isRunning = false;
+        var terminalConsole = document.getElementById('terminalConsole');
+        var termOutput = document.getElementById('termOutput');
+        var termInputLine = document.getElementById('termInputLine');
 
-        stdinToggle.onclick = function() {
-            var open = stdinArea.style.display !== 'none';
-            stdinArea.style.display = open ? 'none' : 'block';
-            stdinToggle.setAttribute('aria-expanded', open ? 'false' : 'true');
-            stdinToggle.textContent = (open ? '▸' : '▾') + ' Input (stdin)';
-        };
+        var isRunning = false;
+        var activeAbortController = null;
+        var accumulatedStdin = '';
+        var lastProgramOutput = '';
 
         function setRunStatus(text, cls) {
             runStatus.textContent = text;
             runStatus.className = 'run-status' + (cls ? ' ' + cls : '');
         }
 
-        runBtn.onclick = function() {
+        function scrollTerminalToBottom() {
+            terminalConsole.scrollTop = terminalConsole.scrollHeight;
+        }
+
+        function executeCode(isInteractiveContinue) {
             if (isRunning || isSubmitting) return;
             if (!cm.getValue().trim().length) {
-                runOutput.textContent = '';
+                termOutput.textContent = '';
+                termInputLine.textContent = '';
                 setRunStatus('Write some code first', 'err');
                 return;
             }
+
+            if (!isInteractiveContinue) {
+                accumulatedStdin = '';
+                lastProgramOutput = '';
+                termOutput.textContent = '';
+                termInputLine.textContent = '';
+            }
+
             isRunning = true;
             runBtn.disabled = true;
-            runOutput.textContent = '';
+            stopBtn.disabled = false;
             setRunStatus('Running…', 'running');
+            scrollTerminalToBottom();
+
+            activeAbortController = new AbortController();
+
             fetch('/question/run', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrfToken
                 },
-                body: new URLSearchParams({ code: cm.getValue(), stdin: stdinArea.value }),
-                credentials: 'same-origin'
+                body: new URLSearchParams({ code: cm.getValue(), stdin: accumulatedStdin }),
+                credentials: 'same-origin',
+                signal: activeAbortController.signal
             }).then(function(resp) {
                 return resp.json().then(function(data) { return { status: resp.status, data: data }; });
             }).then(function(res) {
                 var data = res.data || {};
                 if (res.status !== 200 || data.error) {
-                    runOutput.textContent = data.error || ('Run failed (HTTP ' + res.status + ').');
+                    termOutput.textContent = data.error || ('Run failed (HTTP ' + res.status + ').');
                     setRunStatus('Error', 'err');
                     return;
                 }
-                var out = (data.output != null && data.output !== '')
+
+                function cleanEofOutput(output) {
+                    var hasPythonEof = output.indexOf('EOFError: EOF when reading a line') !== -1;
+                    var hasJavaEof = output.indexOf('java.util.NoSuchElementException') !== -1;
+                    if (hasPythonEof) {
+                        var tbIndex = output.indexOf('Traceback (most recent call last):');
+                        if (tbIndex !== -1) {
+                            return {
+                                cleanText: output.substring(0, tbIndex),
+                                isWaitingForInput: true
+                            };
+                        }
+                    }
+                    if (hasJavaEof) {
+                        var excIndex = output.indexOf('Exception in thread "main"');
+                        if (excIndex !== -1) {
+                            return {
+                                cleanText: output.substring(0, excIndex),
+                                isWaitingForInput: true
+                            };
+                        }
+                    }
+                    return {
+                        cleanText: output,
+                        isWaitingForInput: false
+                    };
+                }
+
+                var rawOutput = (data.output != null && data.output !== '')
                     ? data.output
                     : ((data.stdout || '') + (data.stderr || ''));
-                runOutput.textContent = out.length ? out : '(no output)';
+
+                var eofResult = cleanEofOutput(rawOutput);
+                var cleaned = eofResult.cleanText;
+                if (cleaned.indexOf(lastProgramOutput) === 0) {
+                    var suffix = cleaned.substring(lastProgramOutput.length);
+                    termOutput.textContent += suffix;
+                } else {
+                    termOutput.textContent = cleaned;
+                }
+                lastProgramOutput = cleaned;
+                termInputLine.textContent = '';
+
                 var killed = !!data.signal;
                 var ok = data.exitCode === 0 && !killed;
-                var label = killed
-                    ? ('Killed (' + data.signal + ')')
-                    : ('Exit ' + (data.exitCode == null ? '?' : data.exitCode));
-                setRunStatus(label, ok ? 'ok' : 'err');
-            }).catch(function() {
-                runOutput.textContent = 'Could not reach the code runner. Check your connection and try again.';
-                setRunStatus('Error', 'err');
+                if (eofResult.isWaitingForInput) {
+                    setRunStatus('Waiting for input…', 'running');
+                } else {
+                    var label = killed
+                        ? ('Killed (' + data.signal + ')')
+                        : ('Exit ' + (data.exitCode == null ? '?' : data.exitCode));
+                    setRunStatus(label, ok ? 'ok' : 'err');
+                }
+            }).catch(function(err) {
+                if (err && err.name === 'AbortError') {
+                    termOutput.textContent += '\\n[Execution stopped]\\n';
+                    setRunStatus('Stopped', 'err');
+                } else {
+                    termOutput.textContent = 'Code execution service is currently unavailable. Please try again in a moment.';
+                    setRunStatus('Error', 'err');
+                }
             }).then(function() {
                 isRunning = false;
                 runBtn.disabled = false;
+                stopBtn.disabled = true;
+                activeAbortController = null;
+                scrollTerminalToBottom();
             });
+        }
+
+        runBtn.onclick = function() { executeCode(false); };
+
+        stopBtn.onclick = function() {
+            if (activeAbortController) {
+                activeAbortController.abort();
+            }
         };
-    };
+
+        clearConsoleBtn.onclick = function() {
+            termOutput.textContent = '';
+            termInputLine.textContent = '';
+            accumulatedStdin = '';
+            lastProgramOutput = '';
+            setRunStatus('', '');
+        };
+
+        terminalConsole.onclick = function() {
+            termInputLine.focus();
+        };
+
+        termInputLine.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var userInput = termInputLine.textContent;
+                termInputLine.textContent = '';
+                accumulatedStdin += userInput + '\\n';
+                termOutput.textContent += userInput + '\\n';
+                scrollTerminalToBottom();
+                executeCode(true);
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQuestionPage);
+    } else {
+        initQuestionPage();
+    }
 </script>
 <script>
 // Fullscreen anti-cheat lock: once the test starts, the question page must be in

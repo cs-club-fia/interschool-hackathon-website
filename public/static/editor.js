@@ -30,8 +30,30 @@ function initCodeEditor(config) {
         lineNumbers: true,
         matchBrackets: true,
         indentUnit: 4,
-        theme: 'hackathon-dark'
+        theme: 'hackathon-dark',
+        extraKeys: {
+            'Ctrl-Enter': function () {
+                var runBtn = document.getElementById('runBtn');
+                if (runBtn && typeof runBtn.click === 'function') runBtn.click();
+            },
+            'Cmd-Enter': function () {
+                var runBtn = document.getElementById('runBtn');
+                if (runBtn && typeof runBtn.click === 'function') runBtn.click();
+            }
+        }
     });
+
+    var localKey = 'hackathon_code_draft_' + config.qname;
+    try {
+        var localVal = localStorage.getItem(localKey);
+        if (localVal && localVal.trim().length > 0 && (!textarea || !textarea.value || !textarea.value.trim().length)) {
+            cm.setValue(localVal);
+        }
+    } catch (e) { /* ignore */ }
+
+    setTimeout(function () {
+        try { cm.refresh(); } catch (e) { }
+    }, 50);
 
     var wrapper = cm.getWrapperElement();
     wrapper.addEventListener('paste', function (e) { e.preventDefault(); });
@@ -58,13 +80,17 @@ function initCodeEditor(config) {
 
     function saveDraft(useKeepalive) {
         try {
+            var val = cm.getValue();
+            if (val) {
+                localStorage.setItem(localKey, val);
+            }
             fetch(config.draftUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': config.csrfToken
                 },
-                body: new URLSearchParams({ qname: config.qname, code: cm.getValue() }),
+                body: new URLSearchParams({ qname: config.qname, code: val }),
                 credentials: 'same-origin',
                 keepalive: !!useKeepalive
             }).catch(function () { /* best-effort */ });

@@ -21,20 +21,6 @@ migrations_dir = "migrations"
 # Set it as a secret:  wrangler secret put SECRET_KEY
 # For local `wrangler dev`, put it in .dev.vars (gitignored).
 
-# PISTON_URL is now only a FALLBACK for the code-runner endpoint -- in normal
-# operation the live URL is stored in D1 (the `config` table) and kept current
-# automatically by scripts/piston-tunnel.ps1 (see PISTON-SETUP.md). Set this
-# only if you want a static default when no D1 config row exists yet.
-# [vars]
-# PISTON_URL = "https://piston.your-host.example.com"
-
-# PISTON_AUTH_TOKEN: shared secret the Worker sends as X-Piston-Key to the
-# local Piston auth-proxy (scripts/piston-proxy.mjs). Must match that proxy's
-# configured authToken (in scripts/piston.local.json).
-#   wrangler secret put PISTON_AUTH_TOKEN
-
-# PISTON_ADMIN_TOKEN: bearer token required by POST /internal/piston-url
-# (called by scripts/piston-tunnel.ps1 to self-update the stored Piston URL).
-# Must match that script's configured adminToken. Required -- the route is
-# disabled entirely if this secret is unset.
-#   wrangler secret put PISTON_ADMIN_TOKEN
+# The code runner (question-page "Run Code" panel) calls the public Wandbox
+# API (wandbox.org) directly from the Worker -- no self-hosting, secrets, or
+# tunnel required. See src/wandbox.ts.

@@ -13,11 +13,10 @@ import {
   findStudent,
   findAdmin,
   allStudents,
-  timingSafeEqual,
 } from "./auth";
 import { getQuestion, extensionForLanguage, normalizeLanguage } from "./data/questions";
 import * as db from "./db";
-import { runCode } from "./piston";
+import { runCode } from "./wandbox";
 import {
   renderLogin,
   renderStartTest,
@@ -306,11 +305,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     return new Response(null, { status: 204 });
   }
 
-  // Run the student's current code against the self-hosted Piston runner and
-  // return its output. The language is taken from the student's own record (not
-  // the client) so nobody can run in an easier language than they registered.
-  // Always returns JSON; failures are reported in the body, never as a 5xx that
-  // the browser would treat as a network error.
+  // Run the student's current code against Wandbox and return its output. The
+  // language is taken from the student's own record (not the client) so nobody
+  // can run in an easier language than they registered. Always returns JSON;
+  // failures are reported in the body, never as a 5xx that the browser would
+  // treat as a network error.
   if (path === "/question/run" && method === "POST") {
     const guard = requireStudentApi(session);
     if (guard) return guard;
@@ -332,35 +331,6 @@ async function route(request: Request, env: Env): Promise<Response> {
       signal: result.signal,
       time: result.time,
     });
-  }
-
-  // Self-service Piston URL update, called by the laptop's tunnel watcher
-  // (scripts/piston-tunnel.ps1) whenever cloudflared hands out a new hostname.
-  // Not gated by a login session -- the caller is a local script, not a
-  // browser -- so it's gated by a bearer token instead. Fails closed: with no
-  // PISTON_ADMIN_TOKEN configured, the route is disabled entirely, since
-  // without it anyone could redirect code execution to a server of their
-  // choosing and capture every submission.
-  if (path === "/internal/piston-url" && method === "POST") {
-    if (!env.PISTON_ADMIN_TOKEN) return new Response("", { status: 403 });
-    const authHeader = request.headers.get("Authorization") || "";
-    const provided = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    const enc = new TextEncoder();
-    if (!provided || !timingSafeEqual(enc.encode(provided), enc.encode(env.PISTON_ADMIN_TOKEN))) {
-      return new Response("", { status: 403 });
-    }
-    let body: { url?: unknown };
-    try {
-      body = await request.json();
-    } catch {
-      return new Response("Bad JSON", { status: 400 });
-    }
-    const url = typeof body.url === "string" ? body.url.trim() : "";
-    if (!/^https:\/\/[a-z0-9.-]+(\/.*)?$/i.test(url)) {
-      return new Response("Invalid url", { status: 400 });
-    }
-    await db.setConfig(env, "piston_url", url);
-    return new Response("ok", { status: 200 });
   }
 
   if (path === "/student/leave" && method === "POST") {

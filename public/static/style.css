@@ -493,49 +493,6 @@ button:focus-visible {
     margin-top: 1rem;
 }
 
-/* Info box above the stdin window (C++/Java batch-run instructions). */
-.run-info {
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: #93C5FD;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: var(--radius-sm);
-    padding: 0.6rem 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-/* stdin disclosure toggle: a quiet text button, not a full-width block. */
-.run-sub {
-    width: auto;
-    margin: 0 0 0.5rem 0;
-    padding: 0.15rem 0.25rem;
-    background: none;
-    border: none;
-    box-shadow: none;
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-align: left;
-}
-.run-sub:hover {
-    background: none;
-    box-shadow: none;
-    transform: none;
-    color: var(--text);
-}
-
-.run-stdin {
-    display: block;
-    min-height: 56px;
-    max-height: 160px;
-    resize: vertical;
-    margin-bottom: 0.625rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.45;
-}
-
 .run-bar {
     display: flex;
     align-items: center;
@@ -575,6 +532,41 @@ button:focus-visible {
 .run-status.ok { color: #34D399; }
 .run-status.err { color: #FBBF24; }
 
+.btn-stop {
+    width: auto;
+    margin: 0;
+    padding: 0.5rem 0.9rem;
+    background: rgba(239, 68, 68, 0.12);
+    color: #FCA5A5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: none;
+    font-size: 0.85rem;
+}
+.btn-stop:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #EF4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+}
+.btn-stop:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-clear {
+    width: auto;
+    margin: 0;
+    padding: 0.5rem 0.9rem;
+    background: rgba(148, 163, 184, 0.1);
+    color: #CBD5E1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    box-shadow: none;
+    font-size: 0.85rem;
+}
+.btn-clear:hover {
+    background: rgba(148, 163, 184, 0.2);
+    border-color: #94A3B8;
+}
+
 .run-out-label {
     font-size: 0.7rem;
     letter-spacing: 0.08em;
@@ -583,22 +575,34 @@ button:focus-visible {
     margin-bottom: 0.25rem;
 }
 
-.run-output {
+.run-output, .terminal-console {
     margin: 0 0 0.25rem 0;
-    padding: 0.7rem 0.8rem;
-    min-height: 44px;
-    max-height: 240px;
-    overflow: auto;
+    padding: 0.75rem 0.9rem;
+    min-height: 120px;
+    max-height: 280px;
+    overflow-y: auto;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: #0D1117;
-    color: var(--text);
+    color: #E2E8F0;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
-    line-height: 1.45;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
+    cursor: text;
     -webkit-overflow-scrolling: touch;
+    text-align: left !important;
+}
+
+.term-input-line {
+    display: inline;
+    outline: none;
+    border: none;
+    color: #60A5FA;
+    font-weight: 500;
+    caret-color: #38BDF8;
+    text-align: left;
 }
 
 /* Fullscreen anti-cheat gate: covers the question page until fullscreen is

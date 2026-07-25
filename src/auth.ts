@@ -54,7 +54,7 @@ function b64urlStrDecode(s: string): string {
   return new TextDecoder().decode(b64urlToBytes(s));
 }
 
-export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
