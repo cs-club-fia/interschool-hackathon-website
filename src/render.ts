@@ -3,7 +3,7 @@
 // leave/draft/paste-flag endpoints are identical to the originals, so the
 // vendored editor.js / timer.js / base leave-script work unchanged.
 
-import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE } from "./data/questions";
+import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE, GRADE_OPTIONS, DEFAULT_GRADE } from "./data/questions";
 
 const AMP = /&/g,
   LT = /</g,
@@ -287,7 +287,7 @@ export function layout(opts: LayoutOpts): string {
 </html>`;
 }
 
-export function renderLogin(error: string | null, selectedLanguage?: string): string {
+export function renderLogin(error: string | null, selectedLanguage?: string, selectedGrade?: string): string {
   const sel = selectedLanguage || DEFAULT_LANGUAGE;
   const langOptions = Object.keys(LANGUAGE_LABELS)
     .map(
@@ -295,6 +295,10 @@ export function renderLogin(error: string | null, selectedLanguage?: string): st
         `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(LANGUAGE_LABELS[k])}</option>`,
     )
     .join("");
+  const selGrade = selectedGrade || DEFAULT_GRADE;
+  const gradeOptions = GRADE_OPTIONS.map(
+    (g) => `<option value="${esc(g)}"${g === selGrade ? " selected" : ""}>Grade ${esc(g)}</option>`,
+  ).join("");
   const body = `<div class="glass">
     <div class="header">FIA CS Club Hackathon Login</div>
     <form method="post">
@@ -305,6 +309,11 @@ export function renderLogin(error: string | null, selectedLanguage?: string): st
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Password</label>
             <input type="password" name="password" placeholder="Enter password" required>
+        </div>
+        <div style="margin-bottom: 1rem; text-align: left;">
+            <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Grade</label>
+            <select name="grade">${gradeOptions}</select>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:-0.75rem;">Decides your question set and time limits. It locks once you start.</div>
         </div>
         <div style="margin-bottom: 1.25rem; text-align: left;">
             <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Preferred language</label>

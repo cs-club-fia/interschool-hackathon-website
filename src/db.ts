@@ -225,21 +225,24 @@ export async function getActiveQuestion(env: Env, username: string): Promise<str
   return null;
 }
 
-// --- Student language preference (chosen on the login screen) ---
-// Set the student's language at login, but LOCK it once the test has started --
-// drafts and submissions are language-specific, so flipping languages mid-test
-// would corrupt the editor mode and download extensions. Before the first
-// question is opened the student can still change it by logging in again.
-export async function setStudentLanguageOnLogin(
+// --- Student language + grade preferences (chosen on the login screen) ---
+// Set both at login, but LOCK them once the test has started -- drafts and
+// submissions are language-specific (flipping languages mid-test would
+// corrupt the editor mode and download extensions), and the question set
+// itself is drawn per-grade at Start, so changing grade after that would
+// desync the assignment already on record. Before the first question is
+// opened the student can still change either by logging in again.
+export async function setStudentPrefsOnLogin(
   env: Env,
   username: string,
   language: string,
+  grade: string,
 ): Promise<void> {
   if (await hasStarted(env, username)) return; // locked
   await env.DB.prepare(
-    "INSERT INTO student_prefs (username, language) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET language = excluded.language",
+    "INSERT INTO student_prefs (username, language, grade) VALUES (?, ?, ?) ON CONFLICT(username) DO UPDATE SET language = excluded.language, grade = excluded.grade",
   )
-    .bind(username, language)
+    .bind(username, language, grade)
     .run();
 }
 
@@ -250,6 +253,13 @@ export async function getStudentLanguage(env: Env, username: string): Promise<st
   return row ? row.language : null;
 }
 
+export async function getStudentGrade(env: Env, username: string): Promise<string | null> {
+  const row = await env.DB.prepare("SELECT grade FROM student_prefs WHERE username = ?")
+    .bind(username)
+    .first<{ grade: string | null }>();
+  return row ? row.grade : null;
+}
+
 // username -> chosen language, for the admin dashboard + bulk downloads.
 export async function getStudentLanguages(env: Env): Promise<Record<string, string>> {
   const { results } = await env.DB.prepare(
@@ -257,6 +267,16 @@ export async function getStudentLanguages(env: Env): Promise<Record<string, stri
   ).all<{ username: string; language: string }>();
   const map: Record<string, string> = {};
   for (const r of results) map[r.username] = r.language;
+  return map;
+}
+
+// username -> chosen grade, for the admin dashboard.
+export async function getStudentGrades(env: Env): Promise<Record<string, string>> {
+  const { results } = await env.DB.prepare(
+    "SELECT username, grade FROM student_prefs WHERE grade IS NOT NULL",
+  ).all<{ username: string; grade: string }>();
+  const map: Record<string, string> = {};
+  for (const r of results) map[r.username] = r.grade;
   return map;
 }
 

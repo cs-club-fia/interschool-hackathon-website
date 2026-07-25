@@ -61,6 +61,18 @@ export function templateForGrade(grade: string | undefined | null): Slot[] {
   return (grade && GRADE_TEMPLATE[grade]) || GRADE_TEMPLATE[DEFAULT_GRADE];
 }
 
+// Grade options for the login-screen dropdown, in ascending order (JS engines
+// enumerate integer-like string keys numerically regardless of insertion order).
+export const GRADE_OPTIONS: string[] = Object.keys(GRADE_TEMPLATE);
+
+// Normalize an arbitrary (user-supplied) grade string to a supported key,
+// falling back to a provided default (then DEFAULT_GRADE).
+export function normalizeGrade(grade: string | undefined | null, fallback?: string): string {
+  if (grade && GRADE_TEMPLATE[grade]) return grade;
+  if (fallback && GRADE_TEMPLATE[fallback]) return fallback;
+  return DEFAULT_GRADE;
+}
+
 // Fail loudly (called from tests / startup) if any grade needs more questions of
 // a difficulty than the bank actually contains -- otherwise a draw could not be
 // fulfilled at the event.

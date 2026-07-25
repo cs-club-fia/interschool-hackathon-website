@@ -14,7 +14,7 @@ import {
   findAdmin,
   allStudents,
 } from "./auth";
-import { getQuestion, extensionForLanguage, normalizeLanguage } from "./data/questions";
+import { getQuestion, extensionForLanguage, normalizeLanguage, normalizeGrade } from "./data/questions";
 import * as db from "./db";
 import { runCode } from "./wandbox";
 import {
@@ -88,6 +88,12 @@ async function langFor(env: Env, username: string): Promise<string> {
   return normalizeLanguage(await db.getStudentLanguage(env, username), findStudent(username)?.language);
 }
 
+// Effective grade for one student: their login-screen choice, else the
+// bundled logins.json default, else DEFAULT_GRADE.
+async function gradeFor(env: Env, username: string): Promise<string> {
+  return normalizeGrade(await db.getStudentGrade(env, username), findStudent(username)?.grade);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // Fail closed if the session-signing secret is missing/weak, so a
@@ -123,14 +129,16 @@ async function route(request: Request, env: Env): Promise<Response> {
     const username = String(form.get("username") || "");
     const password = String(form.get("password") || "");
     const chosenLang = String(form.get("language") || "");
+    const chosenGrade = String(form.get("grade") || "");
     const student = findStudent(username);
     if (student && (await verifyPassword(student.password_hash, password))) {
-      // Persist the language chosen on the login screen. It is locked once the
-      // test has started (see db.setStudentLanguageOnLogin).
-      await db.setStudentLanguageOnLogin(
+      // Persist the language + grade chosen on the login screen. Both are
+      // locked once the test has started (see db.setStudentPrefsOnLogin).
+      await db.setStudentPrefsOnLogin(
         env,
         username,
         normalizeLanguage(chosenLang, student.language),
+        normalizeGrade(chosenGrade, student.grade),
       );
       const value = await createSessionValue(env, mkSession(username, false));
       return redirect("/dashboard", { "Set-Cookie": sessionCookieHeader(value) });
@@ -140,8 +148,8 @@ async function route(request: Request, env: Env): Promise<Response> {
       const value = await createSessionValue(env, mkSession(username, true));
       return redirect("/admin", { "Set-Cookie": sessionCookieHeader(value) });
     }
-    // Preserve the student's language pick across a failed attempt.
-    return html(renderLogin("Invalid credentials", chosenLang || undefined), 401);
+    // Preserve the student's language + grade picks across a failed attempt.
+    return html(renderLogin("Invalid credentials", chosenLang || undefined, chosenGrade || undefined), 401);
   }
 
   // --- Logout (student + admin share behaviour) ---
@@ -166,7 +174,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       renderDashboard({
         username: s.u,
         school: student?.school,
-        grade: student?.grade,
+        grade: await gradeFor(env, s.u),
         language: await langFor(env, s.u),
         questions: assignmentIds,
         submitted,
@@ -190,7 +198,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const guard = requireStudent(session);
     if (guard) return guard;
     const s = session as Session;
-    const grade = findStudent(s.u)?.grade;
+    const grade = await gradeFor(env, s.u);
     const assignment = await db.drawAssignment(env, s.u, grade);
     const ids = assignment.map((a) => a.questionId);
     const submitted = await db.getStudentSubmitted(env, s.u);
@@ -371,6 +379,7 @@ async function route(request: Request, env: Env): Promise<Response> {
     const assignmentsByUser = await db.getAssignmentsByUser(env);
     const submittedByUser = await db.getSubmittedByUser(env);
     const langs = await db.getStudentLanguages(env);
+    const grades = await db.getStudentGrades(env);
     const leaveCounts = await db.getLeaveCounts(env, usernames);
     const pasteFlagCounts = await db.getPasteFlagCounts(env, usernames);
     let slotCount = 0;
@@ -390,7 +399,7 @@ async function route(request: Request, env: Env): Promise<Response> {
       return {
         username: st.username,
         school: st.school,
-        grade: st.grade,
+        grade: grades[st.username] || st.grade,
         language: langs[st.username] || st.language,
         leaveCount: leaveCounts[st.username] ?? 0,
         pasteFlags: pasteFlagCounts[st.username] ?? 0,
