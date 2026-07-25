@@ -26,6 +26,13 @@ export function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+// Display name for a language key (e.g. "cpp" -> "C++"); cap() alone mangles
+// C++ into "Cpp", so prefer the curated LANGUAGE_LABELS and fall back to cap()
+// only for an unrecognized value.
+function langLabel(lang: string): string {
+  return LANGUAGE_LABELS[lang] || cap(lang);
+}
+
 // Student page-leave instrumentation (verbatim from base.html). No backticks / ${}.
 const LEAVE_TRACKING_SCRIPT = `<script>
 (function(){
@@ -413,7 +420,7 @@ export function renderDashboard(o: DashboardOpts): string {
   const metaParts = [
     o.school || "",
     o.grade ? "Grade " + o.grade : "",
-    o.language ? cap(o.language) : "",
+    o.language ? langLabel(o.language) : "",
   ]
     .filter(Boolean)
     .map((p) => esc(p));
@@ -463,7 +470,7 @@ export function renderQuestion(o: QuestionOpts): string {
         ${esc(o.questionText)}
     </div>
     <div style="display:inline-block; font-size:0.8125rem; font-weight:600; color:#93C5FD; background:rgba(59, 130, 246, 0.15); border:1px solid rgba(59, 130, 246, 0.3); padding:0.2rem 0.65rem; border-radius:9999px; margin-bottom:1rem;">
-        Language: ${esc(cap(o.language))}
+        Language: ${esc(langLabel(o.language))}
     </div>
     <form id="submitForm" method="post" data-ext="${esc(o.expectedExt)}">
         <input type="hidden" name="csrf_token" value="${esc(o.csrfToken)}">
@@ -919,7 +926,7 @@ export function renderAdmin(o: AdminOpts): string {
             <td style="font-weight:600;">${esc(r.username)}</td>
             <td>${esc(r.school || "")}</td>
             <td>${esc(r.grade || "")}</td>
-            <td>${esc(cap(r.language || ""))}</td>
+            <td>${esc(r.language ? langLabel(r.language) : "")}</td>
             <td>${esc(r.leaveCount)}</td>
             <td>${esc(r.pasteFlags)}</td>
             ${cells}
