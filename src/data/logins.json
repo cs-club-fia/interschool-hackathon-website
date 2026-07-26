@@ -1,25 +1,360 @@
 {
-  "_comment": "PLACEHOLDER credentials -- MUST be rotated before any real/public deployment (these hashes are in a public repo). To set a team/admin password: run `npm run hash \"newPassword\"` and paste the output into password_hash, then redeploy. `grade` is a free-text label shown to admins. `language` is only the fallback default now -- students pick their language on the login screen. See README for the dev-only default passwords.",
   "students": [
     {
-      "username": "team1",
-      "password_hash": "pbkdf2$100000$SI3XQLe3kgvNA7N//JD2Uw==$3Fj+LhYxEMeJZwsNXgrqG4oBH28JK0FJ8FaTO71im08=",
-      "school": "School A",
-      "grade": "10",
+      "username": "CSHack01",
+      "password_hash": "pbkdf2$100000$t0eqO6MKOjTGWtQE9bu6Hw==$UM96eC9am53aMpc238JslC8ZOyoV38+7XTZtIYArl6c=",
+      "school": "FTA",
+      "grade": "",
       "language": "python"
     },
     {
-      "username": "team2",
-      "password_hash": "pbkdf2$100000$IvYPUUWQy4X4NljpWU2qcw==$St5otPndeR7CRsFha0XBGP8uc4tbapadXjd/AR+5krI=",
-      "school": "School B",
-      "grade": "11",
+      "username": "CSHack02",
+      "password_hash": "pbkdf2$100000$TF8i58qZBemI+TacY1vw0Q==$QQhPlZvgpj/dagSfmd905YxHSF7sTNZtax+yxsAV+fc=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack03",
+      "password_hash": "pbkdf2$100000$n5P9PhMm9AE4yCBJLwkEOw==$rQf1L1sspo3Pz430MxKEsspjlOJukOscdwIgME8Cc5k=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack04",
+      "password_hash": "pbkdf2$100000$jvMMmiBBuE72IMSeTRyFLA==$PhhYcwTiedqVgRxTbaPTaPuqPRbGbUVrfmsZg3pwYvY=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack05",
+      "password_hash": "pbkdf2$100000$QqXeVuXpNoKMhJwUNxzQPg==$kCnR0VI7f98PDsGjTlOH3iA0st3QePvGnvILtxhQP98=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack06",
+      "password_hash": "pbkdf2$100000$L+T+mjRfTAvyJXCcgBI/Xw==$oBDEIu3fslGXq49UMxU13Cvxoyd4eVpRQTWjsO2HQxE=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack07",
+      "password_hash": "pbkdf2$100000$lDO9JqzJ3lk7k1DxqqKOWQ==$cQ20z7CUKbSW8TvoAY4ibe8F2G6otONw9HEKKX58gRY=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack08",
+      "password_hash": "pbkdf2$100000$ylYvrBCBM22N0H50KfbigQ==$WX4PcFG+MMjbitSGI7VatToTpPXt5xoiZHtBDGKdiDM=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack09",
+      "password_hash": "pbkdf2$100000$EJz14zDUcL6/h7S7/FUxgQ==$DD7qcOCs9V0QkO4PjVBxFuW4To834wUIX9s+MoufQ9g=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack10",
+      "password_hash": "pbkdf2$100000$p9/NF7LiRlpQJHQuc0iH8A==$uQvrr60A283MzrlTHemz4b5CrrTKeP8drMTiqz0y+R0=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack11",
+      "password_hash": "pbkdf2$100000$AlYKmVP8+uFBeIImEvR5qw==$/HAu7lKxekpuwlHjAVxz3z/DLZjA6rWbw/vywtJaBrc=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack12",
+      "password_hash": "pbkdf2$100000$Bm1b4/Eosv1LInOL0x+j+A==$N+CEcuoKh/CZx2RPJvyx/WFWPwI02x5Vy+vi7NK1gns=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack13",
+      "password_hash": "pbkdf2$100000$e7sF/1DVPrai1OgVeKD8qg==$x//9jsLUtxXmF7+1sog+yrWAvhFvuFQQqCtYEiiW+x4=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack14",
+      "password_hash": "pbkdf2$100000$PhyM3nNWv/79gLXKamUHkg==$jxAET24GuhHeYHeyJSPSVDFYKwmBTEhgZqa06ZDrB8I=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack15",
+      "password_hash": "pbkdf2$100000$SYpQolAMCUsB5lhua3euYw==$+6cCwMczhdrqI3nVo0JxcNgCsFiRCv4QtJ+DfiOkjO8=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack16",
+      "password_hash": "pbkdf2$100000$GpfbxqqELBuF42vOzXmURQ==$u+TEz1y4uQ2I9RxE1C+p3v2yblr9LJ//yjCHkFuneto=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack17",
+      "password_hash": "pbkdf2$100000$fqmDl7GFSWuCfq7z5mRADg==$t9XOf1+XfYrb3by4AphOTdW5bY0CpNm6zrGK4PN5se8=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack18",
+      "password_hash": "pbkdf2$100000$vFhTozHVaaXrVTAeGRk7rw==$56lBmmCresA9uwdD6jaL+pZfHMUhOPuCE/vh0VuiZLo=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack19",
+      "password_hash": "pbkdf2$100000$PdNiOErV1/pCvH7z7jXbTA==$EjE1BhYAyhzn2YcaRRdOhw0zd6EW7qX36SQ9VWrZWYs=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack20",
+      "password_hash": "pbkdf2$100000$BL7vU16PGehWiPb6sWqw8w==$H7ZCRRtAYP41/KfuxkuZ4tEUIr6qNsc9rG+Syq/4DH8=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack21",
+      "password_hash": "pbkdf2$100000$dpry4y10fwjIdOMdZQM3UQ==$/cU1ZdSmT7W4Tk7LKlE8mnUup5I/BM6ekCFuKmbZpsI=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack22",
+      "password_hash": "pbkdf2$100000$NORuUl9cfpjvHyM6VdyoDw==$uq3fvOp+/jyUJ5MpIU+5UYlxIfv33xGNBrf1lCk+hcE=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack23",
+      "password_hash": "pbkdf2$100000$OTYy51yugM5KQhzkTuSLVA==$4ftgW/GR/01jkgDZSOy/U0EhSLrf7ioI9t67sOIrEd4=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack24",
+      "password_hash": "pbkdf2$100000$iBQiOnVW29cBeNd0vZcUmg==$1Cvg2b6E9AzbzSzLaETh3YC1Oj3cPsMGKi6N5qQnmkQ=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack25",
+      "password_hash": "pbkdf2$100000$7hswdpdQMoWgmuO3QuM02w==$gWU7N8+ykqW/nDOpfBiAFS95G/ZMMTpqY1l6MI1FqdU=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack26",
+      "password_hash": "pbkdf2$100000$RvQXlQpAbMc1YQVDY4Bd1Q==$Q+9G/hkJOREmhz/gKiOtBd4AiHKD1IzXMvxt0oJy2HU=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack27",
+      "password_hash": "pbkdf2$100000$qn4oZTihdr59uyO6jQdDlg==$ctOwNQt5lxYTqFm7zZBOZX8DUK7Ecj1UINJtAy71wno=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack28",
+      "password_hash": "pbkdf2$100000$v53Qps5FFZeQni4tpmNT9A==$8o2Oamh57KFluQj6gPFO3kLTwX0in0L4IC1A02lclVE=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack29",
+      "password_hash": "pbkdf2$100000$1NShYHTPayucTUd/EiaojQ==$QKBzYVMPUi1/h+qeItkUAluHAvMXBBtn5C09OoppmZM=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack30",
+      "password_hash": "pbkdf2$100000$CXiEm6phPjow9NhpTrMdsg==$pCWKTBiXWva6GuNaHb7+op93o+Ojbrx9pabUumK7kB4=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack31",
+      "password_hash": "pbkdf2$100000$SPBtWWlVc+8P//9t9iGJkw==$0eAUTg6HnkNgM4sbEfhvFi+yUjTBvIrUXC415ht+6+U=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack32",
+      "password_hash": "pbkdf2$100000$CRFgCccvxOKfJ4ZN0BmvCA==$ZXBk9F8KZVeANJU6QLMiixcIChNXQaQ/pTNvaevZLzc=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack33",
+      "password_hash": "pbkdf2$100000$fYoLc9TzFvA+/Muu9wHK5A==$6WLUC5D2CI3togtp7rtQDbRGySvCK6PROYSvFsabJmU=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack34",
+      "password_hash": "pbkdf2$100000$8W4MmwUdM5EB2o3qpDrhxw==$oyu1flG/WUHy11C4HQnWbMblpPiCVhNbv8yhoxGW9qM=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack35",
+      "password_hash": "pbkdf2$100000$SVPfh0OEcidzAHh5MnceWg==$dL+6J9zFrMQmYrJcpsvd3rmsd60/FiMyqpWOBXBqS0g=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack36",
+      "password_hash": "pbkdf2$100000$cjeguZm9KQEjVCXPf2b7KQ==$dqXH0rzTizDdr298MWQf9e9wCQNilUY1xurrgehotNg=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack37",
+      "password_hash": "pbkdf2$100000$VZDaVRW+X+okuFb0kNkPUQ==$dNXPhC2HYGGrOBiDBTCNKuYi7GbHrgCEdqX5ZFA65+U=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack38",
+      "password_hash": "pbkdf2$100000$AiBMqDLpQhM9QjkJZzTZ2w==$JLhTwGCa/iaYbR8nHJcSfp3K8+GViUq/X7rHP4dqevw=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack39",
+      "password_hash": "pbkdf2$100000$hjwg74KjoeFRC+1I+Qw69A==$64rPXH3WDLwAfINVf5evXIQhZcQCfpUsNMHrbfyoPK8=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack40",
+      "password_hash": "pbkdf2$100000$cfrT0l6mc8bmkDS/byxlKg==$uyjibmi1vdksL57wVKJCM/Got0mBs5qW1ffiaIWwU9s=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack41",
+      "password_hash": "pbkdf2$100000$UwLSyKkGATS+S76IwekQQg==$URbBbgnihio59EPbU06xZZPkBVcaYKf1FIn1D9a9JTY=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack42",
+      "password_hash": "pbkdf2$100000$xd/KcJmuCQ3PS3w/OX2ulA==$9daTS8LOZSGT3X6TY74dDW7pfOtQyYl/MrVyo1wFJJQ=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack43",
+      "password_hash": "pbkdf2$100000$HsvTIjeyBF/ATRU2Vz1hwA==$0RXSmkWTfBEIUAyjr3vIjYFYJZMmtIXn/jDbbJfZVx4=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack44",
+      "password_hash": "pbkdf2$100000$HfL09aA0ETMUP/d2a3jA3w==$utbD1HM0Y5zBpJLHQ16qeM6D/PY9BfxlhyjkIiEv8Q0=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack45",
+      "password_hash": "pbkdf2$100000$D6OCPx9miSsN6LS/Q57ojQ==$ZHOVivR7FMc282DqwlNJ/zL4CDlVqh0sEPW5t4FCy9A=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack46",
+      "password_hash": "pbkdf2$100000$PD3xkwVEejr4XeacwYPVwQ==$qNx17UqbZ/b6vN3tt3rkONMJEOG0Sl1EgsL5aWB8KLg=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack47",
+      "password_hash": "pbkdf2$100000$0Nz9Newf640KO5RIWch/rA==$bMWhNGVjdodcHuOVXQAMAMgiOy80pWpV1faqgDk/jHU=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack48",
+      "password_hash": "pbkdf2$100000$Fe3+9G/vZGZqbmXpIHuKAQ==$b6VoipF+jBqWNjYuH3rWMfKnOi/zhBlqyFSuh18f6rk=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack49",
+      "password_hash": "pbkdf2$100000$46Y0LRuIahEZISFGpCL+Ug==$JzzZdX+Wn3hu+bHecA7EkdGc2qjSQkLPrLs2LeE/L4o=",
+      "school": "FTA",
+      "grade": "",
+      "language": "python"
+    },
+    {
+      "username": "CSHack50",
+      "password_hash": "pbkdf2$100000$EPDlf+7X+IDtC5sFsWrVZQ==$sqL1nb1UxwoUe4m2fBb3GFUcQCnyWkveqlmpeWSMehg=",
+      "school": "FTA",
+      "grade": "",
       "language": "python"
     }
   ],
   "admins": [
     {
       "username": "admin",
-      "password_hash": "pbkdf2$100000$X5FAXGEbqaUTBAtCeg5u4g==$H1wLBnQ5tJQw54e9Xjxb8TbRt0Ic5cLb/E6S9HzLXn0="
+      "password_hash": "pbkdf2$100000$v/NoVSzR3u6/j/TZFKxdDg==$vz4jg6eHdSrtHpOhxM+DMlJkIY9bjW/KqBUfXQu4vmM="
     }
   ]
 }
