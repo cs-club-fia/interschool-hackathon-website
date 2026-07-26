@@ -478,6 +478,9 @@ export function renderQuestion(o: QuestionOpts): string {
             <textarea id="codeArea" name="code">${esc(o.draftCode)}</textarea>
         </div>
         <div id="runPanel">
+            ${o.language === "cpp" ? `<div class="status" style="text-align:left; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.35); color:#BAE6FD; font-size:0.85rem; line-height:1.55; margin-bottom:0.85rem;">
+                <strong>&#128161; Reading input in C++:</strong> The console below re-runs your whole program each time you press <strong>Enter</strong>. To give input (e.g. <code>cin &gt;&gt; n</code>), click into the console, type your value &mdash; for several values, put them on one line separated by spaces &mdash; then press <strong>Enter</strong>. Note: clicking <strong>Run Code</strong> before entering input won&rsquo;t pause &mdash; unlike Python/Java, C++ shows a placeholder result instead of prompting.
+            </div>` : ""}
             <div class="run-bar" style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                     <button type="button" id="runBtn" class="run-button">&#9654; Run Code</button>
