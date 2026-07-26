@@ -385,6 +385,10 @@ export async function resetSubmissions(env: Env): Promise<void> {
     env.DB.prepare("DELETE FROM submissions"),
     env.DB.prepare("DELETE FROM drafts"),
     env.DB.prepare("DELETE FROM assignments"),
+    // A reset is a full start-over, so wipe the anti-cheat counters too --
+    // otherwise stale leave_count / paste_flag_count survive the reset and the
+    // admin table keeps showing old "leaves"/paste flags against a fresh test.
+    env.DB.prepare("DELETE FROM student_metrics"),
   ]);
 }
 
