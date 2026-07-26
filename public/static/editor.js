@@ -16,7 +16,7 @@ var PASTE_FLAG_DEBOUNCE_MS = 3000;
 
 var CM_MODE_BY_EXT = {
     py: 'python',
-    cpp: 'text/x-c++src',
+    cpp: 'text/x-c++',
     java: 'text/x-java'
 };
 

@@ -44,6 +44,16 @@ function stripJavaPublicClassModifier(code: string): string {
   return code.replace(/\bpublic(\s+)(?=(?:(?:final|abstract|strictfp|sealed|non-sealed)\s+)*class\b)/g, "");
 }
 
+function injectCppCinExceptions(code: string): string {
+  const helper = `#include <iostream>\n` +
+    `struct __InitCinExceptions {\n` +
+    `    __InitCinExceptions() {\n` +
+    `        std::cin.exceptions(std::ios_base::failbit | std::ios_base::badbit);\n` +
+    `    }\n` +
+    `} __init_cin_exceptions;\n\n`;
+  return helper + code;
+}
+
 interface WandboxResponse {
   status?: string;
   signal?: string;
@@ -68,7 +78,12 @@ export async function runCode(env: Env, input: RunInput): Promise<RunResult> {
   };
 
   const compiler = WANDBOX_COMPILERS[input.language] || WANDBOX_COMPILERS.python;
-  const code = input.language === "java" ? stripJavaPublicClassModifier(input.code || "") : input.code || "";
+  let code = input.code || "";
+  if (input.language === "java") {
+    code = stripJavaPublicClassModifier(code);
+  } else if (input.language === "cpp") {
+    code = injectCppCinExceptions(code);
+  }
 
   const payload = {
     compiler,

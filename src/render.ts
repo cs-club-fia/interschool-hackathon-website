@@ -479,7 +479,7 @@ export function renderQuestion(o: QuestionOpts): string {
         </div>
         <div id="runPanel">
             ${o.language === "cpp" ? `<div class="status" style="text-align:left; background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.35); color:#BAE6FD; font-size:0.85rem; line-height:1.55; margin-bottom:0.85rem;">
-                <strong>&#128161; Reading input in C++:</strong> The console below re-runs your whole program each time you press <strong>Enter</strong>. To give input (e.g. <code>cin &gt;&gt; n</code>), click into the console, type your value &mdash; for several values, put them on one line separated by spaces &mdash; then press <strong>Enter</strong>. Note: clicking <strong>Run Code</strong> before entering input won&rsquo;t pause &mdash; unlike Python/Java, C++ shows a placeholder result instead of prompting.
+                <strong>&#128161; Reading input in C++:</strong> The console below re-runs your whole program each time you press <strong>Enter</strong>. To give input (e.g. <code>cin &gt;&gt; n</code>), click into the console, type your value &mdash; for several values, put them on one line separated by spaces &mdash; then press <strong>Enter</strong>. Note: if your program reads input, clicking <strong>Run Code</strong> pauses and waits for you to type it in the console below &mdash; the same as Python and Java.
             </div>` : ""}
             <div class="run-bar" style="display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -676,6 +676,7 @@ export function renderQuestion(o: QuestionOpts): string {
                 function cleanEofOutput(output) {
                     var hasPythonEof = output.indexOf('EOFError: EOF when reading a line') !== -1;
                     var hasJavaEof = output.indexOf('java.util.NoSuchElementException') !== -1;
+                    var hasCppEof = output.indexOf('std::__ios_failure') !== -1 || output.indexOf('std::ios_base::failure') !== -1 || output.indexOf('iostream error') !== -1;
                     if (hasPythonEof) {
                         var tbIndex = output.indexOf('Traceback (most recent call last):');
                         if (tbIndex !== -1) {
@@ -690,6 +691,15 @@ export function renderQuestion(o: QuestionOpts): string {
                         if (excIndex !== -1) {
                             return {
                                 cleanText: output.substring(0, excIndex),
+                                isWaitingForInput: true
+                            };
+                        }
+                    }
+                    if (hasCppEof) {
+                        var cppIndex = output.indexOf('terminate called');
+                        if (cppIndex !== -1) {
+                            return {
+                                cleanText: output.substring(0, cppIndex),
                                 isWaitingForInput: true
                             };
                         }

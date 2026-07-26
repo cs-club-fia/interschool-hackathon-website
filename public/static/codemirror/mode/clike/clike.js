@@ -438,7 +438,7 @@ CodeMirror.defineMode("clike", function(config, parserConfig) {
     modeProps: {fold: ["brace", "include"]}
   });
 
-  def(["text/x-c++src", "text/x-c++hdr"], {
+  def(["text/x-c++src", "text/x-c++hdr", "text/x-c++"], {
     name: "clike",
     keywords: words(cKeywords + " " + cppKeywords),
     types: cTypes,
