@@ -57,6 +57,14 @@ export const GRADE_TEMPLATE: Record<string, Slot[]> = {
 };
 export const DEFAULT_GRADE = "10";
 
+// --- Admin "Reset All Submissions" kill switch ---
+// The reset is GLOBAL: db.resetSubmissions() deletes every row in submissions,
+// drafts, assignments and student_metrics with no per-school/per-date filter.
+// This event runs across multiple dates (one school per date), so a reset on a
+// later date would destroy the results of a date already completed.
+// Set back to true only when every date is finished and the data is exported.
+export const RESET_ENABLED = false;
+
 export function templateForGrade(grade: string | undefined | null): Slot[] {
   return (grade && GRADE_TEMPLATE[grade]) || GRADE_TEMPLATE[DEFAULT_GRADE];
 }

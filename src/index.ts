@@ -14,7 +14,7 @@ import {
   findAdmin,
   allStudents,
 } from "./auth";
-import { getQuestion, extensionForLanguage, normalizeLanguage, normalizeGrade } from "./data/questions";
+import { getQuestion, extensionForLanguage, normalizeLanguage, normalizeGrade, RESET_ENABLED } from "./data/questions";
 import * as db from "./db";
 import { runCode } from "./wandbox";
 import {
@@ -438,6 +438,11 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (guard) return guard;
     if (!(await checkCsrf(request, env, session as Session)))
       return new Response("Bad CSRF token", { status: 400 });
+    // Hard guard, not just a greyed-out button: the reset is global (every
+    // school, every date), so a stray or hand-crafted POST must not be able to
+    // wipe results from a date that already completed. See RESET_ENABLED.
+    if (!RESET_ENABLED)
+      return new Response("Reset is disabled while the multi-date event is running.", { status: 403 });
     await db.resetSubmissions(env);
     return redirect("/admin?reset=1");
   }

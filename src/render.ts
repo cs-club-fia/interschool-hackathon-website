@@ -3,7 +3,7 @@
 // leave/draft/paste-flag endpoints are identical to the originals, so the
 // vendored editor.js / timer.js / base leave-script work unchanged.
 
-import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE, GRADE_OPTIONS, DEFAULT_GRADE } from "./data/questions";
+import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE, GRADE_OPTIONS, DEFAULT_GRADE, RESET_ENABLED } from "./data/questions";
 import { adminUsernames } from "./auth";
 
 const AMP = /&/g,
@@ -1039,7 +1039,12 @@ export function renderAdmin(o: AdminOpts): string {
     <div class="admin-controls" style="margin-top: 2rem; padding: 1.25rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius);">
         <h3 style="color:#F87171; font-size:1.125rem; font-weight:700; margin-bottom:0.5rem;">Database Management</h3>
         <p style="color:#FCA5A5; font-size:0.875rem; margin-bottom:1rem;">Clear all candidate submissions, drafts, and metrics for a fresh test run.</p>
-        <button id="resetBtn" style="background: #EF4444; border-color:#DC2626; color: white; width:auto; padding:0.5rem 1.25rem;">Reset All Submissions</button>
+        ${
+          RESET_ENABLED
+            ? `<button id="resetBtn" style="background: #EF4444; border-color:#DC2626; color: white; width:auto; padding:0.5rem 1.25rem;">Reset All Submissions</button>`
+            : `<button id="resetBtn" disabled title="Disabled while the multi-date event is running" style="background:#2A1D1D; border-color:#3D2626; color:#8A6B6B; width:auto; padding:0.5rem 1.25rem; cursor:not-allowed; opacity:0.6; box-shadow:none;">Reset All Submissions</button>
+        <div style="color:#FCA5A5; font-size:0.8125rem; margin-top:0.75rem; line-height:1.45;">&#128274; Disabled for this multi-date event. The reset is <b>global</b> &mdash; it wipes every school's submissions, drafts, assignments and metrics, including dates that have already finished. Re-enable via <code>RESET_ENABLED</code> in <code>src/data/questions.ts</code> once all dates are done and results are exported.</div>`
+        }
     </div>
 
     <div id="resetModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(3,7,18,0.75);z-index:1000;align-items:center;justify-content:center;">
@@ -1064,9 +1069,12 @@ export function renderAdmin(o: AdminOpts): string {
 </div>
 
 <script>
-document.getElementById('resetBtn').onclick = function() {
-    document.getElementById('resetModal').style.display = 'flex';
-};
+var resetBtnEl = document.getElementById('resetBtn');
+if (resetBtnEl && !resetBtnEl.disabled) {
+    resetBtnEl.onclick = function() {
+        document.getElementById('resetModal').style.display = 'flex';
+    };
+}
 
 setInterval(function() {
     fetch(window.location.href, { credentials: 'same-origin' })
