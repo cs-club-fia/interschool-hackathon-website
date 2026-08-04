@@ -26,6 +26,11 @@ export function findAdmin(username: string): Admin | undefined {
 export function allStudents(): Student[] {
   return logins.students;
 }
+// Usernames of all admins. Used by the login page to skip the grade/language
+// confirmation popup for admins (who never take the test).
+export function adminUsernames(): string[] {
+  return logins.admins.map((a) => a.username);
+}
 
 // --- base64 / base64url helpers ---
 function bytesToB64(bytes: Uint8Array): string {

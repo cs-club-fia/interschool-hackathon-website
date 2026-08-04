@@ -4,6 +4,7 @@
 // vendored editor.js / timer.js / base leave-script work unchanged.
 
 import { EVENT_TIMEZONE, LANGUAGE_LABELS, DEFAULT_LANGUAGE, GRADE_OPTIONS, DEFAULT_GRADE } from "./data/questions";
+import { adminUsernames } from "./auth";
 
 const AMP = /&/g,
   LT = /</g,
@@ -308,7 +309,7 @@ export function renderLogin(error: string | null, selectedLanguage?: string, sel
   ).join("");
   const body = `<div class="glass">
     <div class="header">FIA CS Club Hackathon Login</div>
-    <form method="post">
+    <form method="post" id="loginForm">
         <div style="margin-bottom: 1rem; text-align: left;">
             <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:var(--text);">Username</label>
             <input type="text" name="username" placeholder="Enter your username" required>
@@ -330,7 +331,48 @@ export function renderLogin(error: string | null, selectedLanguage?: string, sel
         <button type="submit">Log In</button>
     </form>
     ${error ? `<div class="status" style="background:rgba(239, 68, 68, 0.15); border-color:rgba(239, 68, 68, 0.3); color:#FCA5A5; margin-top:1rem;">${esc(error)}</div>` : ""}
-</div>`;
+</div>
+<div id="loginConfirmModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(3,7,18,0.75);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#151D2A;border-radius:12px;padding:2rem;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);max-width:400px;margin:auto;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:1.125rem;font-weight:600;margin-bottom:0.75rem;color:var(--text);">Confirm your selections</div>
+    <div style="font-size:1rem;color:var(--text);margin-bottom:0.5rem;"><span id="confGrade" style="font-weight:700;color:var(--primary);"></span> &middot; <span id="confLang" style="font-weight:700;color:var(--primary);"></span></div>
+    <div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1.5rem;">These lock once you start the test. Make sure they are right before continuing.</div>
+    <div style="display:flex;gap:0.75rem;justify-content:center;">
+        <button type="button" id="loginConfirmYes" style="background:#10B981;border-color:#059669;color:#fff;padding:0.5rem 1.25rem;border-radius:8px;font-weight:600;width:auto;">Confirm &amp; Log In</button>
+        <button type="button" id="loginConfirmNo" style="background:#161F2E;border-color:#243042;color:#94A3B8;padding:0.5rem 1.25rem;border-radius:8px;font-weight:600;width:auto;">Go Back</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var form = document.getElementById("loginForm");
+  var modal = document.getElementById("loginConfirmModal");
+  var gradeSel = form.grade, langSel = form.language;
+  var gradeOut = document.getElementById("confGrade"), langOut = document.getElementById("confLang");
+  // Admin usernames (trusted config) skip the confirmation -- grade/language
+  // are meaningless for admins, who never take the test.
+  var admins = ${JSON.stringify(adminUsernames())};
+  // Intercept the submit so the confirmation shows before anything else happens.
+  // Native "required" validation runs first, so the modal only appears once
+  // username + password are filled.
+  form.addEventListener("submit", function (e) {
+    if (admins.indexOf((form.username.value || "").trim()) !== -1) return; // admin: submit straight through
+    e.preventDefault();
+    gradeOut.textContent = gradeSel.options[gradeSel.selectedIndex].text;
+    langOut.textContent = langSel.options[langSel.selectedIndex].text;
+    modal.style.display = "flex";
+  });
+  // form.submit() (programmatic) does NOT re-fire the submit event, so this
+  // confirms straight through without re-opening the modal.
+  document.getElementById("loginConfirmYes").addEventListener("click", function () {
+    modal.style.display = "none";
+    form.submit();
+  });
+  document.getElementById("loginConfirmNo").addEventListener("click", function () {
+    modal.style.display = "none";
+  });
+})();
+</script>`;
   // No CSRF on login (session-establishing request; SameSite=Strict guards it).
   return layout({ title: "Login", csrfToken: "", body });
 }
