@@ -35,6 +35,25 @@ export async function resolveMode(env: Env): Promise<RunnerMode> {
   return DEFAULT_MODE;
 }
 
+// Whether Python should execute in the student's browser (Pyodide) instead of
+// being sent to a server runner. Read per page render from D1:
+//
+//   config.python_runtime = "pyodide"  -> in-browser
+//   (absent) | anything else           -> server  [DEFAULT - today's behaviour]
+//
+// Gated the same way as the runner backend so that deploying this code changes
+// nothing until an operator explicitly opts in -- important when a deploy can
+// land mid-exam. Turning it on/off is a single D1 write; students pick it up on
+// their next question page load, with no redeploy.
+export async function pythonRuntimeIsPyodide(env: Env): Promise<boolean> {
+  try {
+    const v = await getConfig(env, "python_runtime");
+    return (v || "").trim().toLowerCase() === "pyodide";
+  } catch {
+    return false;
+  }
+}
+
 export async function runCode(env: Env, input: RunInput): Promise<RunResult> {
   const mode = await resolveMode(env);
 

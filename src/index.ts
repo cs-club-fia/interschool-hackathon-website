@@ -16,7 +16,7 @@ import {
 } from "./auth";
 import { getQuestion, extensionForLanguage, normalizeLanguage, normalizeGrade, RESET_ENABLED } from "./data/questions";
 import * as db from "./db";
-import { runCode } from "./runner";
+import { runCode, pythonRuntimeIsPyodide } from "./runner";
 import {
   renderLogin,
   renderStartTest,
@@ -227,6 +227,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         language: lang,
         draftCode: await db.getDraft(env, s.u, qname),
         csrfToken: await csrfTokenFor(env, s),
+        pyodide: await pythonRuntimeIsPyodide(env),
       }),
     );
   }
@@ -276,6 +277,7 @@ async function route(request: Request, env: Env): Promise<Response> {
           language: lang,
           draftCode: clampCode(code),
           csrfToken: await csrfTokenFor(env, s),
+          pyodide: await pythonRuntimeIsPyodide(env),
           error: big ? "Submission too large (max ~1 MB)." : "No code submitted",
         }),
         big ? 413 : 200,

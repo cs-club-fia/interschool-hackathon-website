@@ -495,6 +495,11 @@ interface QuestionOpts {
   draftCode: string;
   csrfToken: string;
   error?: string | null;
+  // Opt-in switch for running Python in the browser via Pyodide, resolved from
+  // config.python_runtime in D1 (see runner.ts pythonRuntime). Defaults to false
+  // so a deploy is behaviourally inert until an operator turns it on -- the
+  // page keeps POSTing to /question/run exactly as before.
+  pyodide?: boolean;
 }
 
 export function renderQuestion(o: QuestionOpts): string {
@@ -668,29 +673,51 @@ export function renderQuestion(o: QuestionOpts): string {
         // dependence on an external code runner (and removes the network hop from
         // the per-input-line re-run loop). Every failure path below falls back to
         // the server, so this can only add capability, never remove it.
-        var PY_LOCAL = ${o.language === "python"};
-        var PY_TIMEOUT_MS = 5000;
+        var PY_LOCAL = ${o.pyodide === true && o.language === "python"};
+        // Two independent budgets. Booting Pyodide downloads several MB of WASM
+        // once, which is far slower than any program run -- charging that to the
+        // per-run timeout would kill the worker mid-download on the first Run and
+        // then re-download on every retry. So boot is awaited separately, and the
+        // execution timer only starts once the runtime reports ready.
+        var PY_TIMEOUT_MS = 5000;     // per-run wall clock for the student's code
+        var PY_BOOT_MS = 120000;      // one-time runtime download+init
         var pyWorker = null, pyBroken = false, pyPending = null, pyTimer = null;
+        var pyReady = false, pyBootWaiters = [], pyBootTimer = null;
+
+        function pyFailBoot() {
+            pyBroken = true;
+            try { if (pyWorker) pyWorker.terminate(); } catch (err) {}
+            pyWorker = null;
+            pyReady = false;
+            clearTimeout(pyBootTimer);
+            var ws = pyBootWaiters; pyBootWaiters = [];
+            for (var i = 0; i < ws.length; i++) ws[i](false);
+            if (pyPending) { clearTimeout(pyTimer); var q = pyPending; pyPending = null; q(null); }
+        }
 
         function ensurePyWorker() {
             if (pyWorker || pyBroken) return;
             try {
                 pyWorker = new Worker('/static/py-worker.js');
+                pyReady = false;
+                pyBootTimer = setTimeout(pyFailBoot, PY_BOOT_MS);
                 pyWorker.onmessage = function(e) {
                     var d = e.data || {};
-                    if (d.ready) return;
+                    if (d.ready) {
+                        pyReady = true;
+                        clearTimeout(pyBootTimer);
+                        var ws = pyBootWaiters; pyBootWaiters = [];
+                        for (var i = 0; i < ws.length; i++) ws[i](true);
+                        return;
+                    }
+                    if (d.ok === false && !pyReady) { pyFailBoot(); return; }
                     if (pyPending) {
                         clearTimeout(pyTimer);
                         var p = pyPending; pyPending = null;
                         p(d);
                     }
                 };
-                pyWorker.onerror = function() {
-                    pyBroken = true;
-                    try { pyWorker.terminate(); } catch (err) {}
-                    pyWorker = null;
-                    if (pyPending) { clearTimeout(pyTimer); var q = pyPending; pyPending = null; q(null); }
-                };
+                pyWorker.onerror = function() { pyFailBoot(); };
             } catch (err) { pyBroken = true; pyWorker = null; }
         }
 
@@ -698,24 +725,40 @@ export function renderQuestion(o: QuestionOpts): string {
             if (!pyWorker) return;
             try { pyWorker.terminate(); } catch (err) {}
             pyWorker = null;
+            pyReady = false;
+        }
+
+        function whenPyReady() {
+            return new Promise(function(resolve) {
+                ensurePyWorker();
+                if (!pyWorker) { resolve(false); return; }
+                if (pyReady) { resolve(true); return; }
+                pyBootWaiters.push(resolve);
+            });
         }
 
         function pyRun(code, stdin) {
-            return new Promise(function(resolve) {
-                ensurePyWorker();
-                if (!pyWorker) { resolve(null); return; }
-                pyPending = resolve;
-                pyTimer = setTimeout(function() {
-                    // A runaway loop inside WebAssembly cannot be interrupted --
-                    // terminating the worker is the only way to stop it. The next
-                    // run lazily boots a fresh one.
-                    killPyWorker();
-                    var p = pyPending; pyPending = null;
-                    if (p) p({ ok: true, timedOut: true });
-                }, PY_TIMEOUT_MS);
-                pyWorker.postMessage({ code: code, stdin: stdin });
+            return whenPyReady().then(function(ok) {
+                if (!ok || !pyWorker) return null; // caller falls back to the server
+                return new Promise(function(resolve) {
+                    pyPending = resolve;
+                    pyTimer = setTimeout(function() {
+                        // A runaway loop inside WebAssembly cannot be interrupted --
+                        // terminating the worker is the only way to stop it. The next
+                        // run lazily boots a fresh one (WASM is HTTP-cached by then).
+                        killPyWorker();
+                        var p = pyPending; pyPending = null;
+                        if (p) p({ ok: true, timedOut: true });
+                    }, PY_TIMEOUT_MS);
+                    pyWorker.postMessage({ code: code, stdin: stdin });
+                });
             });
         }
+
+        // Pre-warm: start downloading the runtime as soon as the page loads, so
+        // the cost is paid while the student is reading the question rather than
+        // on their first Run.
+        if (PY_LOCAL) { try { ensurePyWorker(); } catch (err) {} }
 
         function serverRun(code, stdin, signal) {
             return fetch('/question/run', {
