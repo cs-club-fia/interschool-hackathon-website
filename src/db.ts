@@ -6,6 +6,24 @@ import { BANK_IDS_BY_DIFFICULTY, templateForGrade, type Difficulty } from "./dat
 
 const nowSec = () => Date.now() / 1000;
 
+// --- Runtime config (key/value; holds "piston_url" and "code_runner") ---
+// Read on every run, so the operator can repoint the code runner or switch
+// backends with a single D1 write -- no redeploy, no restart, mid-event safe.
+export async function getConfig(env: Env, key: string): Promise<string | null> {
+  const row = await env.DB.prepare("SELECT value FROM config WHERE key = ?")
+    .bind(key)
+    .first<{ value: string }>();
+  return row ? row.value : null;
+}
+
+export async function setConfig(env: Env, key: string, value: string): Promise<void> {
+  await env.DB.prepare(
+    "INSERT INTO config (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+  )
+    .bind(key, value)
+    .run();
+}
+
 // --- Per-student assignment (drawn from the bank at Start) ---
 export interface AssignmentSlot {
   position: number;

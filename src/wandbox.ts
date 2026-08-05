@@ -5,23 +5,7 @@
 // auto-submit). No self-hosting, auth, or tunnel required -- Wandbox is a
 // public, unauthenticated compile-and-run endpoint.
 
-import type { Env } from "./types";
-
-export interface RunInput {
-  language: string;
-  code: string;
-  stdin: string;
-}
-
-export interface RunResult {
-  stdout: string;
-  stderr: string;
-  output: string; // combined text to show (compile errors folded in)
-  exitCode: number | null;
-  signal: string | null;
-  time: string; // human label like "0.04s", or "" if unknown
-  error?: string; // set when the run could not be performed at all
-}
+import type { Env, RunInput, RunResult } from "./types";
 
 const WANDBOX_COMPILE_URL = "https://wandbox.org/api/compile.json";
 const EXEC_TIMEOUT_MS = 15000;

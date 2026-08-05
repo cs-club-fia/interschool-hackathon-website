@@ -16,7 +16,7 @@ import {
 } from "./auth";
 import { getQuestion, extensionForLanguage, normalizeLanguage, normalizeGrade, RESET_ENABLED } from "./data/questions";
 import * as db from "./db";
-import { runCode } from "./wandbox";
+import { runCode } from "./runner";
 import {
   renderLogin,
   renderStartTest,

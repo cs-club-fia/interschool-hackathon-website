@@ -663,6 +663,93 @@ export function renderQuestion(o: QuestionOpts): string {
         var accumulatedStdin = '';
         var lastProgramOutput = '';
 
+        // --- Python executes in-browser via Pyodide; C++/Java go to the server ---
+        // Python is ~84% of entrants, so running it client-side removes almost all
+        // dependence on an external code runner (and removes the network hop from
+        // the per-input-line re-run loop). Every failure path below falls back to
+        // the server, so this can only add capability, never remove it.
+        var PY_LOCAL = ${o.language === "python"};
+        var PY_TIMEOUT_MS = 5000;
+        var pyWorker = null, pyBroken = false, pyPending = null, pyTimer = null;
+
+        function ensurePyWorker() {
+            if (pyWorker || pyBroken) return;
+            try {
+                pyWorker = new Worker('/static/py-worker.js');
+                pyWorker.onmessage = function(e) {
+                    var d = e.data || {};
+                    if (d.ready) return;
+                    if (pyPending) {
+                        clearTimeout(pyTimer);
+                        var p = pyPending; pyPending = null;
+                        p(d);
+                    }
+                };
+                pyWorker.onerror = function() {
+                    pyBroken = true;
+                    try { pyWorker.terminate(); } catch (err) {}
+                    pyWorker = null;
+                    if (pyPending) { clearTimeout(pyTimer); var q = pyPending; pyPending = null; q(null); }
+                };
+            } catch (err) { pyBroken = true; pyWorker = null; }
+        }
+
+        function killPyWorker() {
+            if (!pyWorker) return;
+            try { pyWorker.terminate(); } catch (err) {}
+            pyWorker = null;
+        }
+
+        function pyRun(code, stdin) {
+            return new Promise(function(resolve) {
+                ensurePyWorker();
+                if (!pyWorker) { resolve(null); return; }
+                pyPending = resolve;
+                pyTimer = setTimeout(function() {
+                    // A runaway loop inside WebAssembly cannot be interrupted --
+                    // terminating the worker is the only way to stop it. The next
+                    // run lazily boots a fresh one.
+                    killPyWorker();
+                    var p = pyPending; pyPending = null;
+                    if (p) p({ ok: true, timedOut: true });
+                }, PY_TIMEOUT_MS);
+                pyWorker.postMessage({ code: code, stdin: stdin });
+            });
+        }
+
+        function serverRun(code, stdin, signal) {
+            return fetch('/question/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: new URLSearchParams({ code: code, stdin: stdin }),
+                credentials: 'same-origin',
+                signal: signal
+            }).then(function(resp) {
+                return resp.json().then(function(data) { return { status: resp.status, data: data }; });
+            });
+        }
+
+        // Normalises the Pyodide result into the exact shape /question/run returns,
+        // so all downstream logic (EOF detection, output diffing, status labels) is
+        // shared by both backends and needs no special-casing.
+        function runRequest(code, stdin, signal) {
+            if (!PY_LOCAL || pyBroken) return serverRun(code, stdin, signal);
+            return pyRun(code, stdin).then(function(r) {
+                if (!r) { pyBroken = true; return serverRun(code, stdin, signal); }
+                if (r.ok === false) { pyBroken = true; return serverRun(code, stdin, signal); }
+                if (r.timedOut) {
+                    return { status: 200, data: { stdout: '', stderr: '', output: '',
+                        exitCode: null, signal: 'SIGKILL', time: '' } };
+                }
+                var so = r.stdout || '', se = r.stderr || '';
+                return { status: 200, data: { stdout: so, stderr: se, output: so + se,
+                    exitCode: r.exitCode, signal: null, time: '' } };
+            });
+        }
+
         function setRunStatus(text, cls) {
             runStatus.textContent = text;
             runStatus.className = 'run-status' + (cls ? ' ' + cls : '');
@@ -696,18 +783,7 @@ export function renderQuestion(o: QuestionOpts): string {
 
             activeAbortController = new AbortController();
 
-            fetch('/question/run', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': csrfToken
-                },
-                body: new URLSearchParams({ code: cm.getValue(), stdin: accumulatedStdin }),
-                credentials: 'same-origin',
-                signal: activeAbortController.signal
-            }).then(function(resp) {
-                return resp.json().then(function(data) { return { status: resp.status, data: data }; });
-            }).then(function(res) {
+            runRequest(cm.getValue(), accumulatedStdin, activeAbortController.signal).then(function(res) {
                 var data = res.data || {};
                 if (res.status !== 200 || data.error) {
                     termOutput.textContent = data.error || ('Run failed (HTTP ' + res.status + ').');
@@ -799,6 +875,16 @@ export function renderQuestion(o: QuestionOpts): string {
         stopBtn.onclick = function() {
             if (activeAbortController) {
                 activeAbortController.abort();
+            }
+            // In-browser Python is not abortable via fetch signal -- stop it the
+            // only way WebAssembly allows, by terminating the worker.
+            if (pyPending) {
+                clearTimeout(pyTimer);
+                killPyWorker();
+                var p = pyPending; pyPending = null;
+                p({ ok: true, stdout: '', stderr: '', exitCode: null });
+                termOutput.textContent += '\\n[Execution stopped]\\n';
+                setRunStatus('Stopped', 'err');
             }
         };
 
